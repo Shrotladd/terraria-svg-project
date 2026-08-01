@@ -1,4 +1,4 @@
-My somewhat convoluted program to generate an svg image for the https://terraria.wiki.gg/wiki/Blocks and https://terraria.wiki.gg/wiki/Background_walls wiki page
+My somewhat convoluted program to generate svg images for the https://terraria.wiki.gg/wiki/Blocks and https://terraria.wiki.gg/wiki/Background_walls wiki page
 
 # Todo:
 - [ ] Correctly render lava clouds
