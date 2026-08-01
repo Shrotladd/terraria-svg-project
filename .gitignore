@@ -1,0 +1,18 @@
+.idea/
+.venv/
+.vscode/
+
+# Python files
+/**/__pycache__/
+
+# User supplied
+xnbs/**/
+/**/XNB2PNG.exe
+/**/Andy Std Bold.otf
+
+# Generated files
+output.svg
+terraria_blocks/*
+rendered_block_sections/
+terraria_walls/*
+rendered_wall_sections/
