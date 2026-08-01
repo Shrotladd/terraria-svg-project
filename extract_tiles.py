@@ -38,7 +38,7 @@ def move_and_override(src: str, dst_folder: str) -> None:
     # return
     if pathlib.Path(dst).exists():
         os.remove(dst)
-    shutil.move(src, "terraria_blocks")
+    shutil.move(src, dst_folder)
 
 if __name__ == "__main__":
     # Make sure xnb2png exists

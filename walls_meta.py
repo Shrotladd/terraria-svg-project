@@ -128,7 +128,7 @@ BLOCK_DICTIONARY: dict[Category, Sequence[Wall]] = {
         Wall(209, 'Cinder Wall'),
         Wall(210, 'Magma Wall'),
         Wall(211, 'Smouldering Stone Wall'),
-        Wall(79,  'Obisidian Wall'),
+        Wall(79,  'Obsidian Wall'),
     ),
     Category.WOOD: (
         Wall(4,   'Wood Wall'),
@@ -323,7 +323,7 @@ BLOCK_DICTIONARY: dict[Category, Sequence[Wall]] = {
         Wall(12, 'Copper Brick Wall'),
         Wall(146, 'Copper Plating Wall', pattern=WallPattern.SLAB),
         Wall(45, 'Tin Brick Wall'),
-        Wall(167, 'Tin Plating Fence', pattern=WallPattern.SLAB),
+        Wall(167, 'Tin Plating Wall', pattern=WallPattern.SLAB),
         Wall(231, 'Iron Brick Wall'),
         Wall(145, 'Iron Fence'),
         Wall(245, 'Wrought Iron Fence'),
