@@ -173,7 +173,7 @@ BLOCK_DICTIONARY: dict[Category, Sequence[Block]] = {
     
     Category.MISC: (
         Block(229, 'Honey Block'),
-        Block(230, 'Crisp Honey Block'),
+        Block(230, 'Crispy Honey Block'),
         Block(225, 'Hive'),
         Block(145, 'Candy Cane Block'),
         Block(146, 'Green Candy Cane Block'),
@@ -299,7 +299,7 @@ BLOCK_DICTIONARY: dict[Category, Sequence[Block]] = {
         Block(481, 'Cracked Blue Brick'),
         Block(43, 'Green Brick'),
         Block(482, 'Cracked Green Brick'),
-        Block(44, 'Pink Red'),
+        Block(44, 'Pink Brick'),
         Block(483, 'Cracked Pink Brick'),
         Block(687, 'Lava Moss Brick'),
         Block(688, 'Argon Moss Brick'),
@@ -329,6 +329,9 @@ BLOCK_DICTIONARY: dict[Category, Sequence[Block]] = {
             type=AnimationType.BASIC, num_frames=8, frame_duration=150)),
         Block(458, 'Sandfall Block', anim=BlockAnimData(
             type=AnimationType.BASIC, num_frames=8, frame_duration=200)),
+        Block(708, 'Shimmerfall Block', anim=BlockAnimData(
+            type=AnimationType.BASIC, num_frames=8, frame_duration=150,
+        )),
         Block(328, 'Confetti Block', anim=BlockAnimData(
             type=AnimationType.BASIC, num_frames=8, frame_duration=80)),
         Block(329, 'Midnight Confetti Block', anim=BlockAnimData(
@@ -376,7 +379,7 @@ BLOCK_DICTIONARY: dict[Category, Sequence[Block]] = {
         Block(222, 'Orichalcum Ore'),
         Block(111, 'Adamantite Ore'),
         Block(223, 'Titanium Ore'),
-        Block(211, 'Chlorohyte Ore'),
+        Block(211, 'Chlorophyte Ore'),
         Block(408, 'Luminite ore'),
     ),
     Category.ORE_BRICK: (
@@ -474,7 +477,7 @@ BLOCK_DICTIONARY: dict[Category, Sequence[Block]] = {
         Block(131, 'Inactive Stone Block'),
         Block(421, 'Conveyor Belt (Clockwise)', anim=BlockAnimData(
             type=AnimationType.BASIC, num_frames=4, frame_duration=70)),
-        Block(422, 'Conveyor Belt\n(Counterclockwise)', anim=BlockAnimData(
+        Block(422, 'Conveyor Belt\n(Counter Clockwise)', anim=BlockAnimData(
             type=AnimationType.BASIC, num_frames=4, frame_duration=70, is_reversed=True)),
     ),
     Category.BALLOON: (
@@ -498,7 +501,7 @@ BLOCK_DICTIONARY: dict[Category, Sequence[Block]] = {
         Block(332, 'Gold Coins'),
         Block(333, 'Platinum Coins'),
     ),
-    # TODO improve boulder rendering and placement, rainbow boulder needs animation and 
+    # TODO improve boulder rendering and placement, rainbow boulder needs animation
     Category.BOULDER: (
         Block(749, 'Boulder Block', pattern=BlockPattern.CHECKER),
         Block(716, 'Boulder', pattern=BlockPattern.BOULDER),
