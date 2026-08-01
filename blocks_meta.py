@@ -278,9 +278,9 @@ BLOCK_DICTIONARY: dict[Category, Sequence[Block]] = {
         Block(566, 'Amber Stone Block'),
     ),
     Category.BRICKS: (
-        Block(38, 'Gray Bricks'),
+        Block(38, 'Gray Brick'),
         Block(273, 'Stone (Accent) Slab', pattern=BlockPattern.SLAB),
-        Block(39, 'Red Bricks'),
+        Block(39, 'Red Brick'),
         Block(151, 'Sandstone Brick'),
         Block(274, 'Sandstone Slab', pattern=BlockPattern.SLAB),
         Block(152, 'Ebonstone Brick'),
@@ -330,8 +330,7 @@ BLOCK_DICTIONARY: dict[Category, Sequence[Block]] = {
         Block(458, 'Sandfall Block', anim=BlockAnimData(
             type=AnimationType.BASIC, num_frames=8, frame_duration=200)),
         Block(708, 'Shimmerfall Block', anim=BlockAnimData(
-            type=AnimationType.BASIC, num_frames=8, frame_duration=150,
-        )),
+            type=AnimationType.BASIC, num_frames=8, frame_duration=150)),
         Block(328, 'Confetti Block', anim=BlockAnimData(
             type=AnimationType.BASIC, num_frames=8, frame_duration=80)),
         Block(329, 'Midnight Confetti Block', anim=BlockAnimData(
@@ -380,7 +379,7 @@ BLOCK_DICTIONARY: dict[Category, Sequence[Block]] = {
         Block(111, 'Adamantite Ore'),
         Block(223, 'Titanium Ore'),
         Block(211, 'Chlorophyte Ore'),
-        Block(408, 'Luminite ore'),
+        Block(408, 'Luminite'),
     ),
     Category.ORE_BRICK: (
         Block(47, 'Copper Brick'),
@@ -496,10 +495,10 @@ BLOCK_DICTIONARY: dict[Category, Sequence[Block]] = {
         Block(451, 'Pink Streamer'),
     ),
     Category.COINS: (
-        Block(330, 'Copper Coins'),
-        Block(331, 'Silver Coins'),
-        Block(332, 'Gold Coins'),
-        Block(333, 'Platinum Coins'),
+        Block(330, 'Copper Coin'),
+        Block(331, 'Silver Coin'),
+        Block(332, 'Gold Coin'),
+        Block(333, 'Platinum Coin'),
     ),
     # TODO improve boulder rendering and placement, rainbow boulder needs animation
     Category.BOULDER: (
