@@ -12,7 +12,7 @@ from typing import Protocol
 from PIL import Image
 
 # True for generating block svg
-# False for generating wall svg (currently broken)
+# False for generating wall svg
 BLOCK_MODE: bool = True
 
 # Save constructed block images to "[block/wall]_sections/"
