@@ -79,12 +79,12 @@ class SVGGroup:
 
     def encode(self, indent: Indenter) -> str:
         out = ''
-        out += f'{indent}<g>\n'
-        with indent:
-            out += self.image.encode(indent)
-            for line in self.lines:
-                out += line.encode(indent)
-        out += f'{indent}</g>\n'
+        # out += f'{indent}<g>\n'
+        # with indent:
+        for line in self.lines:
+            out += line.encode(indent)
+        out += self.image.encode(indent)
+        # out += f'{indent}</g>\n'
         return out
 
 @dataclass
