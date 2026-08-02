@@ -1,6 +1,5 @@
 
-from typing import Any, Callable, Sequence
-from abc import abstractmethod
+from typing import Callable, Sequence
 import sys
 import io
 from base64 import b64encode
@@ -39,7 +38,6 @@ class AnimationType(Enum):
     # Starry blocks
     STARRY = auto()
     LAVA_CLOUD = auto()
-    # RAINBOW_CLOUD = auto()
     RAINBOW_BOULDER = auto()
 
 @dataclass(kw_only=True) # dataclass inheritance is weird without kw_only
@@ -50,7 +48,6 @@ class BlockAnimData(AnimData):
 class Block:
     tile_number: int
     name: str
-    # category: Category
     pattern: BlockPattern = BlockPattern.DEFAULT
     anim: BlockAnimData = field(default_factory=lambda: BlockAnimData())
 
@@ -344,12 +341,12 @@ BLOCK_DICTIONARY: dict[Category, Sequence[Block]] = {
     ),
     Category.TEAM_BLOCK: (
         # Team blocks aren't animated but use frame offset to get the brighter block texture
-        Block(426, 'Red Team Block'), #anim=BlockAnimData(num_frames=2, frame_offset=1)),
-        Block(430, 'Green Team Block'), #anim=BlockAnimData(num_frames=2, frame_offset=1)),
-        Block(431, 'Blue Team Block'), #anim=BlockAnimData(num_frames=2, frame_offset=1)),
-        Block(432, 'Yellow Team Block'), #anim=BlockAnimData(num_frames=2, frame_offset=1)),
-        Block(433, 'Pink Team Block'), #anim=BlockAnimData(num_frames=2, frame_offset=1)),
-        Block(434, 'White Team Block'), #anim=BlockAnimData(num_frames=2, frame_offset=1)),
+        Block(426, 'Red Team Block'),
+        Block(430, 'Green Team Block'),
+        Block(431, 'Blue Team Block'),
+        Block(432, 'Yellow Team Block'),
+        Block(433, 'Pink Team Block'),
+        Block(434, 'White Team Block'),
         
         Block(727, 'Dull Red Team Block'),
         Block(728, 'Dull Green Team Block'),
@@ -518,11 +515,6 @@ BLOCK_DICTIONARY: dict[Category, Sequence[Block]] = {
 # ------ Image Lookup Tables ------ #
 
 # Used for non-blending single frame blocks
-# DEFAULT_NO_BLEND_PATTERN_LUT = (
-#     ((0, 3), (2, 0), (1, 3),),
-#     ((0, 1), (2, 1), (4, 1),),
-#     ((0, 4), (2, 2), (1, 4),),
-# )
 DEFAULT_NO_BLEND_PATTERN_LUT = FrameInfo(
     info=LutInfo(
         tiles_x=18, tiles_y=5
@@ -541,11 +533,6 @@ DEFAULT_BLENDED_PATTERN_LUT = FrameInfo(
 )
 
 # Used for non-blending non animated two frame blocks
-# CHECKER_NO_BLEND_PATTERN_LUT = (
-#     ((0, 3), (2, 0), (1, 3),),
-#     ((0, 2), (1, 6), (4, 2),),
-#     ((0, 4), (2, 2), (1, 4),),
-# )
 CHECKER_NO_BLEND_PATTERN_LUT = FrameInfo(
     info=LutInfo(
         tiles_x=18, tiles_y=10,
@@ -558,11 +545,6 @@ CHECKER_NO_BLEND_PATTERN_LUT = FrameInfo(
 )
 
 # Used for non-blending non animated two frame blocks
-# LAYER_NO_BLEND_PATTERN_LUT = (
-#     ((0, 3), (1, 0), (1, 3),),
-#     ((0, 1), (2, 1), (4, 1),),
-#     ((0, 4), (1, 2), (1, 4),),
-# )
 LAYER_NO_BLEND_PATTERN_LUT = FrameInfo(
     info=LutInfo(
         tiles_x=18, tiles_y=10,
@@ -575,11 +557,6 @@ LAYER_NO_BLEND_PATTERN_LUT = FrameInfo(
 )
 
 # Pattern used by slabs and plates
-# SLAB_PATTERN_LUT = (
-#     ((4, 3), (1, 0), (1, 3),),
-#     ((0, 1), (1, 6), (4, 1),),
-#     ((0, 4), (3, 2), (1, 4),),
-# )
 SLAB_PATTERN_LUT = FrameInfo(
     info=LutInfo(
         tiles_x=18, tiles_y=10,
@@ -591,10 +568,6 @@ SLAB_PATTERN_LUT = FrameInfo(
     )
 )
 
-# BOULDER_PATTERN_LUT = (
-#     ((0, 0), (1, 0)),
-#     ((0, 1), (1, 1)),
-# )
 BOULDER_PATTERN_LUT = FrameInfo(
     info=LutInfo(
         tiles_x=2, tiles_y=2,
@@ -674,7 +647,7 @@ CATEGORY_LAYOUT_INFOS = (
         CategoryLayout(Category.CLIMABLE),
         CategoryLayout(Category.COINS),
         CategoryLayout(Category.SPIKES),
-        CategoryLayout(Category.BOULDER),#, layout=LayoutBehaviour.CENTER),
+        CategoryLayout(Category.BOULDER),
     )),
 )
 
@@ -767,8 +740,6 @@ def render_block_boulder(img: Image.Image, block: Block) -> bytes:
         (next_col, next_row)
     ))
 
-    # print(block.name, x_size, y_size, next_col, next_row)
-
     byte_file = io.BytesIO()
     final_img.save(byte_file, format=ImageType.PNG.name)
     if data.DEBUG_SAVE_BLOCK_SECTIONS:
@@ -792,7 +763,6 @@ def render_block_animated(img: Image.Image, block: Block, lut: FrameInfo) -> byt
                         tile = extract_tile(img, index, frames_y, f, lut.info)
                         tile_sequence.append(tile)
                 frame = image_manipulation.image_grid(tile_sequence, block.section_size())
-                # frame.resize((32, 32))
                 tile_list.append(frame)
                         
         case AnimationType.RAINBOW:
@@ -834,14 +804,6 @@ def render_block_animated(img: Image.Image, block: Block, lut: FrameInfo) -> byt
                 [12, 9, 6],
                 [9, 6, 3],
                 [6, 3, 0]]
-            # starry_night_anim_offset = [
-            #     [4, 3, 2],
-            #     [3, 2, 1],
-            #     [2, 1, 0]]
-            # starry_night_anim_offset = [
-            #     [6, 5, 4],
-            #     [4, 3, 2],
-            #     [2, 1, 0]]
 
             intermediate_frames = []
             num_intermediates = block.anim.num_frames * 2
@@ -928,7 +890,7 @@ class BlockMetadata(Metadata):
     # ------ Getter api ------ #
 
     @staticmethod
-    def get_template_and_lut(pattern: BlockPattern) -> FrameInfo: #tuple[Template, Lut]:
+    def get_template_and_lut(pattern: BlockPattern) -> FrameInfo:
         match pattern:
             case BlockPattern.DEFAULT:
                 lut = DEFAULT_NO_BLEND_PATTERN_LUT

@@ -425,17 +425,6 @@ BLOCK_DICTIONARY: dict[Category, Sequence[Wall]] = {
         Wall(98, 'Green Slab Wall'),
         Wall(99, 'Green Tiled Wall'),
     ),
-    Category.NEW: (
-    ),
-    # 100: {'name': 'Blue Slab Wall', 'category': 'ignore'},
-    # 101: {'name': 'Blue Tiled Wall', 'category': 'ignore'},
-    # 102: {'name': 'Pink Slab Wall', 'category': 'ignore'},
-    # 103: {'name': 'Pink Tiled Wall', 'category': 'ignore'},
-    # 104: {'name': 'Green Slab Wall', 'category': 'ignore'},
-    # 105: {'name': 'Green Tiled Wall', 'category': 'ignore'},
-    # 112: {'name': 'Lihzahrd Brick Wall', 'category': 'ignore'},
-    # 183: {'name': 'Marble Wall', 'category': 'ignore'},
-    # 184: {'name': 'Granite Wall', 'category': 'ignore'},
 }
 
 
@@ -531,11 +520,6 @@ BORDER_INCLUDE_LUT = {
 }
 
 # Used for non-blending single frame blocks
-# DEFAULT_NO_BLEND_PATTERN_LUT = (
-#     ((0, 3), (2, 0), (1, 3),),
-#     ((0, 1), (2, 1), (4, 1),),
-#     ((0, 4), (2, 2), (1, 4),),
-# )
 DEFAULT_NO_BLEND_PATTERN_LUT = FrameInfo(
     info=LutInfo(
         tiles_x=18, tiles_y=5,
@@ -550,11 +534,6 @@ DEFAULT_NO_BLEND_PATTERN_LUT = FrameInfo(
 )
 
 # Used for non-blending non animated two frame blocks
-# CHECKER_NO_BLEND_PATTERN_LUT = (
-#     ((0, 3), (2, 0), (1, 3),),
-#     ((0, 2), (1, 6), (4, 2),),
-#     ((0, 4), (2, 2), (1, 4),),
-# )
 CHECKER_NO_BLEND_PATTERN_LUT = FrameInfo(
     info=LutInfo(
         tiles_x=18, tiles_y=7,
@@ -569,11 +548,6 @@ CHECKER_NO_BLEND_PATTERN_LUT = FrameInfo(
 )
 
 # Used for non-blending non animated two frame blocks
-# LAYER_NO_BLEND_PATTERN_LUT = (
-#     ((0, 3), (1, 0), (1, 3),),
-#     ((0, 1), (2, 1), (4, 1),),
-#     ((0, 4), (1, 2), (1, 4),),
-# )
 LAYER_NO_BLEND_PATTERN_LUT = FrameInfo(
     info=LutInfo(
         tiles_x=18, tiles_y=7,
@@ -588,11 +562,6 @@ LAYER_NO_BLEND_PATTERN_LUT = FrameInfo(
 )
 
 # Pattern used by slabs and plates
-# SLAB_PATTERN_LUT = (
-#     ((4, 3), (1, 0), (1, 3),),
-#     ((0, 1), (1, 6), (4, 1),),
-#     ((0, 4), (3, 2), (1, 4),),
-# )
 SLAB_PATTERN_LUT = FrameInfo(
     info=LutInfo(
         tiles_x=18, tiles_y=7,
@@ -748,14 +717,6 @@ def render_wall_animated(img: Image.Image, wall: Wall, lut: FrameInfo) -> bytes:
                 [12, 9, 6],
                 [9, 6, 3],
                 [6, 3, 0]]
-            # starry_night_anim_offset = [
-            #     [4, 3, 2],
-            #     [3, 2, 1],
-            #     [2, 1, 0]]
-            # starry_night_anim_offset = [
-            #     [6, 5, 4],
-            #     [4, 3, 2],
-            #     [2, 1, 0]]
 
             intermediate_frames = []
             num_intermediates = wall.anim.num_frames * 2
@@ -787,35 +748,6 @@ def render_wall_animated(img: Image.Image, wall: Wall, lut: FrameInfo) -> bytes:
                 frame = image_manipulation.image_grid(tile_sequence, wall.section_size())
                 tile_list.append(frame)
 
-    # # Pretty ugly but gets the wall to animate in reverse and with extended frames
-    # # Used for the rune wall
-    # repeat_frame_last = None
-    # repeat_frame_first = None
-    # repeat_duration = None
-    # if 'repeat_last' in wa:
-    #     repeat_frame_last = tile_list[-1]
-    #     repeat_frame_first = tile_list[0]
-    #     repeat_duration = wa['duration'] * wa['repeat_last']
-    # if 'reverse' in wa:
-    #     tile_tmp_list = tile_list
-    #     dur_tmp_list = duration_list
-
-    #     tile_tmp_list.append(repeat_frame_last)
-    #     dur_tmp_list.append(repeat_duration // 2)
-    #     # print(list(reversed(tile_list)))
-    #     tile_tmp_list.extend(list(reversed(tile_list))[0:-1])
-    #     dur_tmp_list.extend(list(reversed(duration_list)))
-    #     tile_tmp_list.append(repeat_frame_first)
-    #     dur_tmp_list.append(repeat_duration)
-    #     # print((tile_tmp_list, dur_tmp_list))
-    #     tile_list = tile_tmp_list
-    #     duration_list = dur_tmp_list
-    #     duration_list.pop(0)
-
-    # repeat_frame_last = None
-    # repeat_frame_first = None
-    # repeat_duration = None
-
     bounced = []
     if wall.anim.bounce:
         bounced = list(reversed(tile_list))
@@ -823,7 +755,6 @@ def render_wall_animated(img: Image.Image, wall: Wall, lut: FrameInfo) -> bytes:
     repeated = []
     repeated_bounced = []
     if wall.anim.repeat_last > 0:
-
         # TODO Avoid duplicating repeat frame n times by passing a different duration to gif_img.save
         # wall.anim.frame_duration * wall.anim.repeat_last?
         repeated = [tile_list[-1] for _ in range(wall.anim.repeat_last)]
@@ -878,21 +809,13 @@ class WallMetadata(Metadata):
     def get_template_and_lut(pattern: WallPattern) -> FrameInfo:
         match pattern:
             case WallPattern.DEFAULT:
-                # template = DEFAULT_NO_BLEND_PATTERN_TEMPLATE
                 lut = DEFAULT_NO_BLEND_PATTERN_LUT
             case WallPattern.CHECKER:
-                # template = CHECKER_NO_BLEND_PATTERN_TEMPLATE
                 lut = CHECKER_NO_BLEND_PATTERN_LUT
             case WallPattern.SLAB:
-                # template = SLAB_PATTERN_TEMPLATE
                 lut = SLAB_PATTERN_LUT
             case WallPattern.LAYER:
-                # template = LAYER_NO_BLEND_PATTERN_TEMPLATE
                 lut = LAYER_NO_BLEND_PATTERN_LUT
-            # case WallPattern.BOULDER:
-            #     # template = BOULDER_PATTERN_TEMPLATE
-            #     lut = BOULDER_PATTERN_LUT
-        # return template, lut
         return lut
 
     @staticmethod

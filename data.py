@@ -64,7 +64,6 @@ class ImageType(Enum):
 class RenderedSection:
     index: int
     image_type: ImageType
-    # category: Category
     data: bytes
 
 @unique

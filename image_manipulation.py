@@ -47,36 +47,8 @@ def extract_tile_animated_border(
             y + border_offsets[3] + tile_size[1],
         )
     )
-    
-    # if border_space is None:
-    #     border_space = (0, 0)
 
-    # if border_offsets is None:
-    #     border_offsets = (0, 0, 0, 0)
-
-    # i, j = indices
-    
-    # x_frame_ind = frame // num_frames_y
-    # y_frame_ind = frame % num_frames_y
-
-    # x_offset = (info.tiles_x + info.tile_space) * tile_size[0] * x_frame_ind
-    # y_offset = (info.tiles_y + info.tile_space) * tile_size[1] * y_frame_ind
-
-    # TILE_SPACE = tile_size[0] + border_space[0], tile_size[1] + border_space[1]
-
-    # tile_x_coord = i * TILE_SPACE[0] + x_offset
-    # tile_y_coord = j * TILE_SPACE[1] + y_offset
-
-    # return img.crop(
-    #     box=(
-    #         tile_x_coord + border_offsets[0],
-    #         tile_y_coord + border_offsets[1],
-    #         tile_x_coord + border_offsets[2] + tile_size[0],
-    #         tile_y_coord + border_offsets[3] + tile_size[1],
-    #     )
-    # )
-
-def image_grid(images: list[Image.Image], horizontal_limit: int | None = None, tight: bool = False) -> Image.Image:
+def image_grid(images: list[Image.Image], horizontal_limit: int | None = None) -> Image.Image:
     """Takes a list of PIL images and stacks them horizontally to the specified limit then vertically.
     If tight is True, pack images as closely as possible, instead of minimising over lap
     """
@@ -85,17 +57,10 @@ def image_grid(images: list[Image.Image], horizontal_limit: int | None = None, t
         horizontal_limit = np.iinfo(int).max
         
     n_horiz = min(len(images), horizontal_limit)
-    # if tight:
-    #     h_sizes, v_sizes = [images[0].size[0]] * n_horiz, [images[0].size[1]] * (n_images // n_horiz)
-    # else:
     h_sizes, v_sizes = [0] * n_horiz, [0] * (len(images) // n_horiz)
     
     for i, im in enumerate(images):
         h, v = i % n_horiz, i // n_horiz
-        # if tight:    
-        #     h_sizes[h] = min(h_sizes[h], im.size[0])
-        #     v_sizes[v] = min(v_sizes[v], im.size[1])
-        # else:   
         h_sizes[h] = max(h_sizes[h], im.size[0])
         v_sizes[v] = max(v_sizes[v], im.size[1])
         

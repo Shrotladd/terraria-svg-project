@@ -15,27 +15,8 @@ from glob import glob
 import subprocess
 import shutil
 
-# import blocks_meta
-# import walls_meta
-
-# def get_needed_blocks() -> list[int]:
-#     blocks = []
-#     for _, block_defs in walls_meta.BLOCK_DICTIONARY.items():
-#         for block in block_defs:
-#             blocks.append(block.tile_number)
-#     return blocks
-
-# def get_needed_walls() -> list[int]:
-#     walls = []
-#     for _, wall_defs in walls_meta.BLOCK_DICTIONARY.items():
-#         for wall in wall_defs:
-#             walls.append(wall.tile_number)
-#     return walls
-
 def move_and_override(src: str, dst_folder: str) -> None:
     dst = pathlib.Path(src).relative_to(dst_folder, walk_up=True)
-    # print(dst)
-    # return
     if pathlib.Path(dst).exists():
         os.remove(dst)
     shutil.move(src, dst_folder)

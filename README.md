@@ -1,4 +1,4 @@
-My somewhat convoluted program to generate svg images for the https://terraria.wiki.gg/wiki/Blocks and https://terraria.wiki.gg/wiki/Background_walls wiki page
+My program to generate svg images for the https://terraria.wiki.gg/wiki/Blocks and https://terraria.wiki.gg/wiki/Background_walls wiki page's
 
 # Todo:
 - [ ] Correctly render lava clouds
@@ -11,6 +11,7 @@ My somewhat convoluted program to generate svg images for the https://terraria.w
   - numpy
   - uharfbuzz
   - fonttools
+  - brotlicffi
 - https://fontsgeek.com/fonts/Andy-Std-Bold, place .otf file at the root
 - Correctly named tile map files. Follow instructions in extract_tiles.py
 
@@ -24,5 +25,4 @@ My somewhat convoluted program to generate svg images for the https://terraria.w
 
 3. Run terraria_blocks_project.py *Optional*: You can set DEBUG_SAVE_BLOCK_SECTIONS in terraria_blocks_project.py to True to dump rendered png/gif files to sections/
 
-4. ouput.svg should be created 
-
+4. Reference.svg should be created
