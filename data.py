@@ -18,7 +18,8 @@ BLOCK_MODE: bool = True
 # Save constructed block images to "[block/wall]_sections/"
 DEBUG_SAVE_BLOCK_SECTIONS: bool = True
 
-TERRARIA_FONT = "Andy Std Bold.otf"
+TERRARIA_FONT_NAME = "Andy Std Bold"
+TERRARIA_FONT = TERRARIA_FONT_NAME + ".otf"
 
 # Dimensions in # of tiles
 SHEET_TILES_X = 16

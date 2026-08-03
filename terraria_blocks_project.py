@@ -17,7 +17,7 @@ from fontTools.ttLib import TTFont
 
 from data import (
     LayoutBehaviour, RenderedSection, ImageType,
-    TILE_SIZE, FONT_SIZE, DEBUG_SAVE_BLOCK_SECTIONS, TERRARIA_FONT, BLOCK_MODE
+    TILE_SIZE, FONT_SIZE, DEBUG_SAVE_BLOCK_SECTIONS, TERRARIA_FONT_NAME, TERRARIA_FONT, BLOCK_MODE
 )
 
 # import blocks_meta as meta
@@ -106,60 +106,58 @@ class SVGDocument:
     background: SVGRect
     blocks: list[SVGGroup]
 
-    indent: Indenter = field(default_factory=lambda: Indenter())
-
     def encode(self) -> str:
         out = ''
+        indent = Indenter()
 
         # Write header
         out += (
             f'<?xml version="1.0" encoding="UTF-8"?>\n'
-            f'<svg width="{self.width}" height="{self.height}" xmlns="http://www.w3.org/2000/svg" '
-            f'xmlns:xlink="http://www.w3.org/1999/xlink">\n'
+            f'<svg width="{self.width}" height="{self.height}" xmlns="http://www.w3.org/2000/svg">\n'
         )
         # Main body
-        with self.indent:
+        with indent:
             # Write font style
             out += (
-                f'{self.indent}<style>\n'
-                f'{self.indent}@font-face {'{'}\n'
+                f'{indent}<style>\n'
+                f'{indent}@font-face {'{'}\n'
             )
-            with self.indent:
+            with indent:
                 out += (
-                    f'{self.indent}font-family: "{self.font_family}";\n'
-                    f'{self.indent}src:\n'
+                    f'{indent}font-family: "{self.font_family}";\n'
+                    f'{indent}src:\n'
                 )
-                with self.indent:
+                with indent:
                     out += (
-                        f'{self.indent}url(data:font/woff2;charset=utf-8;base64,{str(b64encode(self.font_data.getvalue()), encoding='utf-8')});\n'
-                        f'{self.indent}format("woff2");\n'
+                        f'{indent}url(data:font/woff2;base64,{str(b64encode(self.font_data.getvalue()), encoding='utf-8')});\n'
+                        f'{indent}format("woff2");\n'
                     )
             out += (
-                f'{self.indent}{'}'}\n'
-                f'{self.indent}text {'{'}\n'
+                f'{indent}{'}'}\n'
+                f'{indent}text {'{'}\n'
             )
-            with self.indent:
+            with indent:
                 out += (
-                    f'{self.indent}font-family: "{self.font_family}";\n'
-                    f'{self.indent}font-size: {self.font_size}px;\n'
+                    f'{indent}font-family: "{self.font_family}";\n'
+                    f'{indent}font-size: {self.font_size}px;\n'
                 )
             out += (
-                f'{self.indent}{'}'}\n'
-                f'{self.indent}</style>\n'
+                f'{indent}{'}'}\n'
+                f'{indent}</style>\n'
             )
 
             # Background rect
-            out += self.background.encode(self.indent)
+            out += self.background.encode(indent)
 
             # Make sure pngs use nearest neighbor
-            out += f'{self.indent}<g image-rendering="optimizeSpeed" style="image-rendering:pixelated">\n'
+            out += f'{indent}<g image-rendering="optimizeSpeed" style="image-rendering:pixelated">\n'
 
             # Blocks and text
-            with self.indent:
+            with indent:
                 for block_group in self.blocks:
-                    out += block_group.encode(self.indent)
+                    out += block_group.encode(indent)
             
-            out += f'{self.indent}</g>\n'
+            out += f'{indent}</g>\n'
 
         out += '</svg>\n'
         
@@ -275,6 +273,7 @@ def write_svg(rendered_blocks: dict[Enum, list[RenderedSection]]) -> None:
 
 
     subset_otions = subset.Options()
+    # Convert font to woff2
     subset_otions.flavor = "woff2"  # type: ignore
     subset_otions.layout_features = ["*"]
     subset_otions.desubroutinize = True
@@ -289,7 +288,7 @@ def write_svg(rendered_blocks: dict[Enum, list[RenderedSection]]) -> None:
 
     svg_document = SVGDocument(
         width = w, height = h,
-        font_family='AndyStdBold',
+        font_family=TERRARIA_FONT_NAME,
         font_data=subsetted_font_data,
         font_size=FONT_SIZE,
         background=SVGRect(
@@ -332,7 +331,7 @@ if __name__ == "__main__":
         render_path = pathlib.Path(Meta.rendered_image_folder_path())
         if not render_path.exists():
             print(f"Creating {render_path}")
-            pathlib.Path(Meta.rendered_image_folder_path()).mkdir()
+            render_path.mkdir()
     
     process()
 
