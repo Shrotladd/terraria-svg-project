@@ -1,6 +1,8 @@
 """
 1. Download XNB2PNG from https://github.com/tolik518/Xnb2png
 2. Place XNB2PNG.exe at the root
+3. Run extract_tiles.py and follow prompts
+3a. 
 3a. Create xnbs/ folder if it doesn't already exist
 3b. Place Tiles_*.xnb and/or Wall_*.xnb files from 'Terraria/Content/Images/' in xnbs/
 4. Run extract_tiles.py to extract sprite sheets
@@ -120,6 +122,8 @@ if __name__ == "__main__":
     if not pathlib.Path("XNB2PNG.exe").exists():
         print("Please provide XNB2PNG.exe from https://github.com/tolik518/Xnb2png", file=sys.stderr)
         pause_exit(1)
+    # Make sure xnbs folder exists
+    pathlib.Path("xnbs").mkdir(exist_ok=True)
 
     # Do we already have xnb's?
     xnbs = glob("xnbs/*.xnb")
@@ -130,7 +134,7 @@ if __name__ == "__main__":
             shutil.copy(file, "xnbs/")
             print(f"Copied {file}")
 
-    # Clean out images
+    # Clean out old images
     files = glob("xnbs/*.png")
     for file in files:
         os.remove(file)

@@ -9,15 +9,30 @@ from dataclasses import dataclass, field
 import pathlib
 import math
 from base64 import b64encode
+import argparse
 
 from PIL import Image
 import uharfbuzz as hb
 from fontTools import subset
 from fontTools.ttLib import TTFont
 
+import data
+
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "-m", "--mode", help="Which kind of svg to generate", nargs=1,
+    default=0, choices=["block", "wall"])
+parser.add_argument(
+    "--debug_save_sections", default=False, help="Save constructed block images to \"{block/wall}_sections/\"",
+    action=argparse.BooleanOptionalAction)
+args = parser.parse_args(sys.argv[1:])
+data.BLOCK_MODE = True if args.mode == "block" else False
+data.DEBUG_SAVE_BLOCK_SECTIONS = args.debug_save_sections
+
 from data import (
     LayoutBehaviour, RenderedSection, ImageType,
-    TILE_SIZE, FONT_SIZE, DEBUG_SAVE_BLOCK_SECTIONS, TERRARIA_FONT_NAME, TERRARIA_FONT, BLOCK_MODE
+    TILE_SIZE, FONT_SIZE, TERRARIA_FONT_NAME, TERRARIA_FONT,
+    BLOCK_MODE, DEBUG_SAVE_BLOCK_SECTIONS,  # Import BLOCK_MODE, etc *AFTER* parsing args
 )
 
 # import blocks_meta as meta

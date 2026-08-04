@@ -13,10 +13,9 @@ from PIL import Image
 
 # True for generating block svg
 # False for generating wall svg
-BLOCK_MODE: bool = True
-
+BLOCK_MODE: bool # Value assigned after argument parsing
 # Save constructed block images to "[block/wall]_sections/"
-DEBUG_SAVE_BLOCK_SECTIONS: bool = False
+DEBUG_SAVE_BLOCK_SECTIONS: bool # Value assigned after argument parsing
 
 TERRARIA_FONT_NAME = "Andy Std Bold"
 TERRARIA_FONT = TERRARIA_FONT_NAME + ".otf"
