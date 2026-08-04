@@ -21,8 +21,8 @@ My program to generate svg images for the https://terraria.wiki.gg/wiki/Blocks a
 
 2. Acquire dependencies
 
-3. In data.py change BLOCK_MODE to True to generate block's svg or False to generate wall svg
+3. In data.py change BLOCK_MODE to True to generate block svg or False to generate wall svg. *Optionally* set DEBUG_SAVE_BLOCK_SECTIONS to True to dump rendered png/gif's to disk
 
-3. Run terraria_blocks_project.py *Optional*: You can set DEBUG_SAVE_BLOCK_SECTIONS in terraria_blocks_project.py to True to dump rendered png/gif files to sections/
+3. Run generate.py
 
 4. Reference.svg should be created

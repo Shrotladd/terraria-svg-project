@@ -16,7 +16,7 @@ from PIL import Image
 BLOCK_MODE: bool = True
 
 # Save constructed block images to "[block/wall]_sections/"
-DEBUG_SAVE_BLOCK_SECTIONS: bool = True
+DEBUG_SAVE_BLOCK_SECTIONS: bool = False
 
 TERRARIA_FONT_NAME = "Andy Std Bold"
 TERRARIA_FONT = TERRARIA_FONT_NAME + ".otf"
