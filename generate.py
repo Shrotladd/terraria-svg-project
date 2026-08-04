@@ -20,8 +20,8 @@ import data
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    "-m", "--mode", help="Which kind of svg to generate", nargs=1,
-    default=0, choices=["block", "wall"])
+    "-m", "--mode", help="Which kind of svg to generate",
+    default="block", choices=["block", "wall"])
 parser.add_argument(
     "--debug_save_sections", default=False, help="Save constructed block images to \"{block/wall}_sections/\"",
     action=argparse.BooleanOptionalAction)
