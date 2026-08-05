@@ -5,7 +5,7 @@ start_time = time.time()
 import io
 import sys
 from enum import Enum
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 import pathlib
 import math
 from base64 import b64encode
@@ -15,24 +15,36 @@ from PIL import Image
 import uharfbuzz as hb
 from fontTools import subset
 from fontTools.ttLib import TTFont
+from fontTools.pens.svgPathPen import SVGPathPen
+# from fontTools.pens.transformPen import TransformPen
+# from fontTools.misc.transform import Transform 
 
 import data
 
 parser = argparse.ArgumentParser()
+
 parser.add_argument(
     "-m", "--mode", help="Which kind of svg to generate",
     default="block", choices=["block", "wall"])
 parser.add_argument(
     "--debug_save_sections", default=False, help="Save constructed block images to \"{block/wall}_sections/\"",
     action=argparse.BooleanOptionalAction)
+parser.add_argument(
+    "--embed_font", default=False, help="Save's space and allows for selectable text, WARNING currently wiki.gg flags the file as unsafe when used, off by default",
+    action=argparse.BooleanOptionalAction)
+
 args = parser.parse_args(sys.argv[1:])
+
 data.BLOCK_MODE = True if args.mode == "block" else False
 data.DEBUG_SAVE_BLOCK_SECTIONS = args.debug_save_sections
+data.EMBED_FONT_IN_SVG = args.embed_font
+if data.EMBED_FONT_IN_SVG:
+    print("- Embedding font enabled")
 
 from data import (
     LayoutBehaviour, RenderedSection, ImageType,
     TILE_SIZE, FONT_SIZE, TERRARIA_FONT_NAME, TERRARIA_FONT,
-    BLOCK_MODE, DEBUG_SAVE_BLOCK_SECTIONS,  # Import BLOCK_MODE, etc *AFTER* parsing args
+    BLOCK_MODE, DEBUG_SAVE_BLOCK_SECTIONS, EMBED_FONT_IN_SVG # Import BLOCK_MODE, etc *AFTER* parsing args
 )
 
 # import blocks_meta as meta
@@ -74,18 +86,28 @@ class SVGImage:
         )
 
 @dataclass
+class CodepointInfo:
+    gid: int
+    x_advance: float
+    y_advance: float
+
+@dataclass
 class SVGText:
     x: int
     y: int
-    text: str
+    text: str | list[CodepointInfo]
 
     def encode(self, indent: Indenter) -> str:
-        return (
-            f'{indent}<text '
-            f'x="{self.x}" y="{self.y}">'
-            f'{self.text}'
-            '</text>\n'
-        )
+        if isinstance(self.text, str):
+            return f'{indent}<text x="{self.x}" y="{self.y}">{self.text}</text>\n' 
+        out = ''
+        x = self.x
+        y = self.y
+        for codepoint_info in self.text:
+            out += f'{indent}<use href="#{codepoint_info.gid}" x="{x:.2f}" y="{y:.2f}"/>\n'
+            x += codepoint_info.x_advance
+            y += codepoint_info.y_advance
+        return out
 
 @dataclass
 class SVGGroup:
@@ -117,9 +139,73 @@ class SVGDocument:
     height: int
     font_family: str
     font_size: int
-    font_data: io.BytesIO
+    font: TTFont
+    used_glyphs: set[int]
+    font_options: subset.Options
     background: SVGRect
     blocks: list[SVGGroup]
+
+    def encode_embedded_font(self, indent: Indenter) -> str:
+        # Write font style
+        out = (
+            f'{indent}<style>\n'
+            f'{indent}@font-face {'{'}\n'
+        )
+        with indent:
+            out += (
+                f'{indent}font-family: "{self.font_family}";\n'
+                f'{indent}src:\n'
+            )
+            with indent:
+                out += (
+                    f'{indent}url(data:font/{self.font_options.flavor};base64,{str(b64encode(self.font_to_data().getvalue()), encoding='utf-8')});\n'
+                    f'{indent}format("{self.font_options.flavor}");\n'
+                )
+        out += (
+            f'{indent}{'}'}\n'
+            f'{indent}text {'{'}\n'
+        )
+        with indent:
+            out += (
+                f'{indent}font-family: "{self.font_family}";\n'
+                f'{indent}font-size: {self.font_size}px;\n'
+            )
+        out += (
+            f'{indent}{'}'}\n'
+            f'{indent}</style>\n'
+        )
+        return out
+
+    def font_to_data(self) -> io.BytesIO:
+        font_data = io.BytesIO()
+        subset.save_font(self.font, font_data, self.font_options)
+        return font_data
+
+    def encode_text_paths(self, indent: Indenter) -> str:
+        glyph_set = self.font.getGlyphSet()
+        glyph_order = self.font.getGlyphOrder()
+        cmap = self.font.getBestCmap()
+
+        # Assume the font contains character-to-glyph-index map
+        assert(cmap is not None)
+
+
+        scale: float = FONT_SIZE / self.font["head"].unitsPerEm # type: ignore
+        paths = ''
+        paths += f"{indent}<g style=\"display: none;\">"  # Hide them since they shouldn't be rendered
+        with indent:
+            for glyph_id in self.used_glyphs:
+                try:
+                    glyph_name = glyph_order[glyph_id]
+                except:
+                    continue
+                glyph = glyph_set[glyph_name]
+                pen = SVGPathPen(glyph_set)
+                # transform_pen = TransformPen(pen, Transform().scale(x=scale, y=scale))
+                glyph.draw(pen)
+                paths += f'{indent}<path id="{glyph_id}" transform="scale({scale},-{scale})" d="{pen.getCommands()}"/>\n'
+        paths += f"{indent}</g>"
+        return paths
 
     def encode(self) -> str:
         out = ''
@@ -132,34 +218,11 @@ class SVGDocument:
         )
         # Main body
         with indent:
-            # Write font style
-            out += (
-                f'{indent}<style>\n'
-                f'{indent}@font-face {'{'}\n'
-            )
-            with indent:
-                out += (
-                    f'{indent}font-family: "{self.font_family}";\n'
-                    f'{indent}src:\n'
-                )
-                with indent:
-                    out += (
-                        f'{indent}url(data:font/woff2;base64,{str(b64encode(self.font_data.getvalue()), encoding='utf-8')});\n'
-                        f'{indent}format("woff2");\n'
-                    )
-            out += (
-                f'{indent}{'}'}\n'
-                f'{indent}text {'{'}\n'
-            )
-            with indent:
-                out += (
-                    f'{indent}font-family: "{self.font_family}";\n'
-                    f'{indent}font-size: {self.font_size}px;\n'
-                )
-            out += (
-                f'{indent}{'}'}\n'
-                f'{indent}</style>\n'
-            )
+
+            if EMBED_FONT_IN_SVG:
+                out += self.encode_embedded_font(indent)
+            else:
+                out += self.encode_text_paths(indent)
 
             # Background rect
             out += self.background.encode(indent)
@@ -265,20 +328,32 @@ def write_svg(rendered_blocks: dict[Enum, list[RenderedSection]]) -> None:
                 svg_lines: list[SVGText] = []
                 for line in block_data.name.splitlines():
                     glyph_infos, glyph_positions = shape_text(font, line)
-                    svg_lines.append(SVGText(
+                    text = SVGText(
                         x = int(x + text_x_offset),
                         y = int(y + text_y_offset),
-                        text = line,
-                    ))
+                        text = line if EMBED_FONT_IN_SVG else [],
+                    )
+                    
                     for info, pos in zip(glyph_infos, glyph_positions):
                         gid = info.codepoint
                         used_glyphs.add(gid)
-                        x += pos.x_advance * scale
-                        y += pos.y_advance * scale
+                        xadv = pos.x_advance * scale
+                        yadv = pos.y_advance * scale
+                        x += xadv
+                        y += yadv
+                        if not EMBED_FONT_IN_SVG:
+                            assert(isinstance(text.text, list))
+                            text.text.append(CodepointInfo(
+                                gid=gid, x_advance=xadv, y_advance=yadv
+                            ))
+
+                    svg_lines.append(text)
+
                     max_x = max(max_x, x + text_x_offset)
                     max_y = max(max_y, y + text_y_offset + size[1] / 2)
                     x = start_x
                     y += FONT_SIZE
+
                 row += offsets.row_advance
                 # text_ref_str += "  </g>\n"
                 groups.append(SVGGroup(img, svg_lines))
@@ -287,24 +362,25 @@ def write_svg(rendered_blocks: dict[Enum, list[RenderedSection]]) -> None:
         col += column_info.x_offset_to_next
 
 
-    subset_otions = subset.Options()
+    subset_options = subset.Options()
     # Convert font to woff2
-    subset_otions.flavor = "woff2"  # type: ignore
-    subset_otions.layout_features = ["*"]
-    subset_otions.desubroutinize = True
-    subsetter = subset.Subsetter()
-    subsetter.populate(gids=used_glyphs)
+    subset_options.flavor = "woff2"  # type: ignore
+    subset_options.layout_features = ["*"]
+    subset_options.desubroutinize = True
     subsetted_font = TTFont(io.BytesIO(font_data))
-    subsetter.subset(subsetted_font)
-    subsetted_font_data = io.BytesIO()
-    subset.save_font(subsetted_font, subsetted_font_data, subset_otions)
+    if EMBED_FONT_IN_SVG:
+        subsetter = subset.Subsetter()
+        subsetter.populate(gids=used_glyphs)
+        subsetter.subset(subsetted_font)
 
     w, h = int(max_x + SIDE_PADDING), int(max_y + SIDE_PADDING)
 
     svg_document = SVGDocument(
         width = w, height = h,
         font_family=TERRARIA_FONT_NAME,
-        font_data=subsetted_font_data,
+        font=subsetted_font,
+        font_options=subset_options,
+        used_glyphs=used_glyphs,
         font_size=FONT_SIZE,
         background=SVGRect(
             width=w, height=h, fill="#fff"

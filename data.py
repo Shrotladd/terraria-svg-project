@@ -17,6 +17,10 @@ BLOCK_MODE: bool # Value assigned after argument parsing
 # Save constructed block images to "[block/wall]_sections/"
 DEBUG_SAVE_BLOCK_SECTIONS: bool # Value assigned after argument parsing
 
+# Workaround for wiki.gg flagging embedded fonts in @font-face as unsafe
+# Off by default
+EMBED_FONT_IN_SVG: bool
+
 TERRARIA_FONT_NAME = "Andy Std Bold"
 TERRARIA_FONT = TERRARIA_FONT_NAME + ".otf"
 
