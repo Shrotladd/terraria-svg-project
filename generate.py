@@ -192,7 +192,7 @@ class SVGDocument:
 
         scale: float = FONT_SIZE / self.font["head"].unitsPerEm # type: ignore
         paths = ''
-        paths += f"{indent}<g style=\"display: none;\">"  # Hide them since they shouldn't be rendered
+        paths += f"{indent}<g style=\"display: none;\">\n"  # Hide them since they shouldn't be rendered
         with indent:
             for glyph_id in self.used_glyphs:
                 try:
