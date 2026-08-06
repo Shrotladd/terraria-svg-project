@@ -11,6 +11,18 @@ from typing import Protocol
 
 from PIL import Image
 
+@unique
+class Lang(Enum):
+    en = auto()
+    # fr = auto()
+    # pt = auto()
+    # ru = auto()
+    # zh = auto()
+
+    @classmethod
+    def names(cls) -> list[str]:
+        return [e.name for e in cls]
+
 # True for generating block svg
 # False for generating wall svg
 BLOCK_MODE: bool # Value assigned after argument parsing
@@ -20,6 +32,9 @@ DEBUG_SAVE_BLOCK_SECTIONS: bool # Value assigned after argument parsing
 # Workaround for wiki.gg flagging embedded fonts in @font-face as unsafe
 # Off by default
 EMBED_FONT_IN_SVG: bool
+
+LANGUAGE: Lang
+
 
 TERRARIA_FONT_NAME = "Andy Std Bold"
 TERRARIA_FONT = TERRARIA_FONT_NAME + ".otf"
@@ -81,6 +96,27 @@ class LayoutOffsets:
     text_y_offset: float = TILE_SIZE + FONT_SIZE / 2
     row_advance: int = 2  # Space added between rows in a category
     category_advance: int = 2  # Space added between categories
+
+# @dataclass
+class Name:
+    # en: str       # English
+    # fr: str = ""  # French
+    # pt: str = ""  # Portuguese
+    # ru: str = ""  # Russian
+    # zh: str = ""  # Simplified chinese
+
+    def __init__(self, **kwargs: str):
+        """Provide names for each supported language code"""
+        assigned = {l: False for l in Lang.names()}
+        for lang, name in kwargs.items():
+            setattr(self, lang, name)
+            assigned[lang] = True
+
+        if not all([b for b in assigned.values()]):
+            raise TypeError(f"Missing names for {", ".join([l for l, b in assigned.items() if not b])}")
+
+    def get(self, lang: Lang) -> str:
+        return getattr(self, lang.name)
 
 def fix_frame_dims(anim: AnimData) -> tuple[int, int]:
     # TODO fix janky indexing, what if both are -1?

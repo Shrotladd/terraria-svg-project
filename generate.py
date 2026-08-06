@@ -20,6 +20,7 @@ from fontTools.pens.svgPathPen import SVGPathPen
 # from fontTools.misc.transform import Transform 
 
 import data
+from data import Lang
 
 parser = argparse.ArgumentParser()
 
@@ -32,19 +33,23 @@ parser.add_argument(
 parser.add_argument(
     "--embed_font", default=False, help="Save's space and allows for selectable text, WARNING currently wiki.gg flags the file as unsafe when used, off by default",
     action=argparse.BooleanOptionalAction)
+parser.add_argument(
+    "-l", "--lang", help="Which language to generate",
+    default=Lang.en.name, choices=Lang.names())
 
 args = parser.parse_args(sys.argv[1:])
 
 data.BLOCK_MODE = True if args.mode == "block" else False
 data.DEBUG_SAVE_BLOCK_SECTIONS = args.debug_save_sections
 data.EMBED_FONT_IN_SVG = args.embed_font
+data.LANGUAGE = Lang[args.lang]
 if data.EMBED_FONT_IN_SVG:
     print("- Embedding font enabled")
 
 from data import (
     LayoutBehaviour, RenderedSection, ImageType,
     TILE_SIZE, FONT_SIZE, TERRARIA_FONT_NAME, TERRARIA_FONT,
-    BLOCK_MODE, DEBUG_SAVE_BLOCK_SECTIONS, EMBED_FONT_IN_SVG # Import BLOCK_MODE, etc *AFTER* parsing args
+    BLOCK_MODE, DEBUG_SAVE_BLOCK_SECTIONS, EMBED_FONT_IN_SVG, LANGUAGE, # Import BLOCK_MODE, etc *AFTER* parsing args
 )
 
 # import blocks_meta as meta
@@ -256,7 +261,7 @@ def shape_text(font, text: str):
 
     return infos, positions
 
-def write_svg(rendered_blocks: dict[Enum, list[RenderedSection]]) -> None:
+def write_svg(lang: Lang, rendered_blocks: dict[Enum, list[RenderedSection]]) -> None:
 
     try:
         with open(TERRARIA_FONT, 'rb') as f:
@@ -326,7 +331,7 @@ def write_svg(rendered_blocks: dict[Enum, list[RenderedSection]]) -> None:
                 text_y_offset = offsets.text_y_offset
 
                 svg_lines: list[SVGText] = []
-                for line in block_data.name.splitlines():
+                for line in block_data.name.get(lang).splitlines():
                     glyph_infos, glyph_positions = shape_text(font, line)
                     text = SVGText(
                         x = int(x + text_x_offset),
@@ -391,7 +396,7 @@ def write_svg(rendered_blocks: dict[Enum, list[RenderedSection]]) -> None:
     with open('Reference.svg', 'w', newline='') as file:
         file.write(svg_document.encode())
 
-def process() -> None:
+def process(lang: Lang) -> None:
     file_dict: dict[Category, list[RenderedSection]] = {}
 
     print("Rendering")
@@ -404,7 +409,7 @@ def process() -> None:
 
                 try:
                     Meta.get_tile_img_prepasses()[block.tile_number](img)
-                    print(f"Doing {block.name} prepass")
+                    print(f"Doing {block.name.get(lang)} prepass")
                 except KeyError:
                     pass
                 
@@ -415,7 +420,7 @@ def process() -> None:
                 file_dict[category].append(render)
 
     print("Writing svg")
-    write_svg(file_dict) # type: ignore
+    write_svg(lang, file_dict) # type: ignore
 
 if __name__ == "__main__":
     if DEBUG_SAVE_BLOCK_SECTIONS:
@@ -424,7 +429,7 @@ if __name__ == "__main__":
             print(f"Creating {render_path}")
             render_path.mkdir()
     
-    process()
+    process(lang=LANGUAGE)
 
     end_time = time.time()
     print(f"Finished in {end_time - start_time:.2f} seconds")
