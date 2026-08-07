@@ -580,39 +580,34 @@ class CategoryLayout:
     category: Category
     layout: LayoutBehaviour = LayoutBehaviour.ALTERNATING
 
-@dataclass
-class ColumnInfo:
-    x_offset_to_next: int
-    categories: Sequence[CategoryLayout]
-
 CATEGORY_LAYOUT_INFOS = (
-    ColumnInfo(x_offset_to_next=300, categories=(
+    (
         CategoryLayout(Category.NATURAL),
         CategoryLayout(Category.DUNGEON),
         CategoryLayout(Category.ANCIENT),
-    )),
-    ColumnInfo(x_offset_to_next=300, categories=(
+    ),
+    (
         CategoryLayout(Category.WOOD),
         CategoryLayout(Category.STONE2),
         CategoryLayout(Category.SAND),
         CategoryLayout(Category.STONE3),
-    )),
-    ColumnInfo(x_offset_to_next=300, categories=(
+    ),
+    (
         CategoryLayout(Category.STONE),
         CategoryLayout(Category.GLASS),
-    )),
-    ColumnInfo(x_offset_to_next=300, categories=(
+    ),
+    (
         CategoryLayout(Category.MISC_BRICK),
         CategoryLayout(Category.WALLPAPER),
-    )),
-    ColumnInfo(x_offset_to_next=300, categories=(
+    ),
+    (
         CategoryLayout(Category.TRADITIONAL),
         CategoryLayout(Category.MISC),
         CategoryLayout(Category.GEMSPARK),
-    )),
-    ColumnInfo(x_offset_to_next=300, categories=(
+    ),
+    (
         CategoryLayout(Category.METAL),
-    )),
+    ),
 )
 
 LAYOUT_OFFSETS = LayoutOffsets(
@@ -853,7 +848,7 @@ class WallMetadata(Metadata):
     # Where to place blocks when generating svg
 
     @staticmethod
-    def get_category_layout_info() -> Sequence[ColumnInfo]:
+    def get_category_layout_info() -> Sequence[Sequence[CategoryLayout]]:
         return CATEGORY_LAYOUT_INFOS
 
     @staticmethod

@@ -333,6 +333,7 @@ def write_svg(lang: Lang, rendered_blocks: dict[Enum, list[RenderedSection]]) ->
     max_y: int = 0
 
     def get_tuck_x(current_column: int, height: int) -> int:
+        # Allow for auto aligning of columns accounting for the length of block language strings
         nonlocal group_columns
         x = 0
         if current_column == 0: # The first column
@@ -350,7 +351,7 @@ def write_svg(lang: Lang, rendered_blocks: dict[Enum, list[RenderedSection]]) ->
         column_height = 0
         column_width = 0
         group_column = SVGColumn(start_x=0, groups=[])
-        for category_layout in column_info.categories:
+        for category_layout in column_info:
             category = category_layout.category
 
             try:

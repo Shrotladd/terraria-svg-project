@@ -613,31 +613,26 @@ class CategoryLayout:
     category: Category
     layout: LayoutBehaviour = LayoutBehaviour.ALTERNATING
 
-@dataclass
-class ColumnInfo:
-    x_offset_to_next: int
-    categories: Sequence[CategoryLayout]
-
 CATEGORY_LAYOUT_INFOS = (
-    ColumnInfo(x_offset_to_next=300, categories=(
+    (
         CategoryLayout(Category.SOIL),
         CategoryLayout(Category.DESERT),
         CategoryLayout(Category.COLD),
         CategoryLayout(Category.MISC),
-    )),
-    ColumnInfo(x_offset_to_next=350, categories=(
+    ),
+    (
         CategoryLayout(Category.STONE),
         CategoryLayout(Category.BRICKS),
         CategoryLayout(Category.GEMSPARK),
-    )),
-    ColumnInfo(x_offset_to_next=300, categories=(
+    ),
+    (
         CategoryLayout(Category.ORE_BRICK),
         CategoryLayout(Category.ORES),
         CategoryLayout(Category.LUNAR_BLOCK),
         CategoryLayout(Category.TRADITIONAL),
         CategoryLayout(Category.WOOD),
-    )),
-    ColumnInfo(x_offset_to_next=350, categories=(
+    ),
+    (
         CategoryLayout(Category.ANCIENT),
         CategoryLayout(Category.GLASS),
         CategoryLayout(Category.TECH),
@@ -649,7 +644,7 @@ CATEGORY_LAYOUT_INFOS = (
         CategoryLayout(Category.COINS),
         CategoryLayout(Category.SPIKES),
         CategoryLayout(Category.BOULDER),
-    )),
+    )
 )
 
 LAYOUT_OFFSETS = LayoutOffsets()
@@ -875,7 +870,7 @@ class BlockMetadata(Metadata):
         return BLOCK_DICTIONARY
 
     @staticmethod
-    def get_category_layout_info() -> Sequence[ColumnInfo]:
+    def get_category_layout_info() -> Sequence[Sequence[CategoryLayout]]:
         return CATEGORY_LAYOUT_INFOS
     
     @staticmethod
