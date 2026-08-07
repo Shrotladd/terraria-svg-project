@@ -67,11 +67,11 @@ class Indenter:
         self.indent_spaces = indent_spaces
 
     def __enter__(self):
-        self.indent += self.indent_spaces
+        self.indent += 1
         return self
 
     def __exit__(self, exc_type, exc, tb):
-        self.indent -= self.indent_spaces
+        self.indent -= 1
 
     def __repr__(self) -> str:
         return ' ' * self.indent * self.indent_spaces
