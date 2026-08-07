@@ -60,6 +60,7 @@ else:
     from walls_meta import WallMetadata as Meta
     from walls_meta import Category
 
+
 class Indenter:
     def __init__(self, indents: int = 0, indent_spaces: int = 2) -> None:
         self.indent = indents
@@ -77,16 +78,16 @@ class Indenter:
     
 @dataclass
 class SVGImage:
-    x: int
+    x_offset: int
     y: int
     width: int
     height: int
     image_type: ImageType
     data: bytes
 
-    def encode(self, indent: Indenter) -> str:
+    def encode(self, start_x: int, indent: Indenter) -> str:
         return (
-            f'{indent}<image x="{self.x}" y="{self.y}" width="{self.width}" height="{self.height}" '
+            f'{indent}<image x="{start_x + self.x_offset}" y="{self.y}" width="{self.width}" height="{self.height}" '
             f'href="data:image/{self.image_type.name.lower()};base64,{str(self.data, encoding="utf-8")}"/>\n'
         )
 
@@ -98,15 +99,15 @@ class CodepointInfo:
 
 @dataclass
 class SVGText:
-    x: int
+    x_offset: int
     y: int
     text: str | list[CodepointInfo]
 
-    def encode(self, indent: Indenter) -> str:
+    def encode(self, start_x: int, indent: Indenter) -> str:
         if isinstance(self.text, str):
-            return f'{indent}<text x="{self.x}" y="{self.y}">{self.text}</text>\n' 
+            return f'{indent}<text x="{start_x + self.x_offset}" y="{self.y}">{self.text}</text>\n' 
         out = ''
-        x = self.x
+        x = float(start_x + self.x_offset)
         y = self.y
         for codepoint_info in self.text:
             out += f'{indent}<use href="#{codepoint_info.gid}" x="{x:.2f}" y="{y:.2f}"/>\n'
@@ -115,18 +116,17 @@ class SVGText:
         return out
 
 @dataclass
-class SVGGroup:
+class SVGRow:
     image: SVGImage
     lines: list[SVGText]
+    max_width: int  # Width of the current group
+    y: int  # Y position of the current group
 
-    def encode(self, indent: Indenter) -> str:
+    def encode(self, start_x: int, indent: Indenter) -> str:
         out = ''
-        # out += f'{indent}<g>\n'
-        # with indent:
         for line in self.lines:
-            out += line.encode(indent)
-        out += self.image.encode(indent)
-        # out += f'{indent}</g>\n'
+            out += line.encode(start_x, indent)
+        out += self.image.encode(start_x, indent)
         return out
 
 @dataclass
@@ -139,6 +139,11 @@ class SVGRect:
         return f'{indent}<rect width="{self.width}" height="{self.height}" fill="{self.fill}"/>\n'
 
 @dataclass
+class SVGColumn:
+    start_x: int
+    groups: list[SVGRow]
+
+@dataclass
 class SVGDocument:
     width: int
     height: int
@@ -148,7 +153,7 @@ class SVGDocument:
     used_glyphs: set[int]
     font_options: subset.Options
     background: SVGRect
-    blocks: list[SVGGroup]
+    blocks: list[SVGColumn]
 
     def encode_embedded_font(self, indent: Indenter) -> str:
         # Write font style
@@ -237,8 +242,9 @@ class SVGDocument:
 
             # Blocks and text
             with indent:
-                for block_group in self.blocks:
-                    out += block_group.encode(indent)
+                for col in self.blocks:
+                    for group in col.groups:
+                        out += group.encode(col.start_x, indent)
             
             out += f'{indent}</g>\n'
 
@@ -261,6 +267,43 @@ def shape_text(font, text: str):
 
     return infos, positions
 
+def get_svg_text(
+        block, font, lang: Lang, used_glyphs: set[int],
+        text_x_offset: int, text_y: float, text_y_offset: int, text_scale: float
+        ) -> tuple[list[SVGText], int, int]:
+    """Get a list of lines and the local max_x and max_y"""
+    svg_lines: list[SVGText] = []
+    x = 0
+    y = 0
+    max_x: int = 0
+    max_y: int = 0
+
+    for line in block.name.get(lang).splitlines():
+        glyph_infos, glyph_positions = shape_text(font, line)
+        text = SVGText(
+            x_offset = text_x_offset,
+            y = int(y + text_y + text_y_offset),
+            text = line if EMBED_FONT_IN_SVG else [],
+        )
+        for info, pos in zip(glyph_infos, glyph_positions):
+            gid = info.codepoint
+            used_glyphs.add(gid)
+            xadv = pos.x_advance * text_scale
+            yadv = pos.y_advance * text_scale
+            x += xadv
+            y += yadv
+            if not EMBED_FONT_IN_SVG:
+                assert(isinstance(text.text, list))
+                text.text.append(CodepointInfo(
+                    gid=gid, x_advance=xadv, y_advance=yadv
+                ))
+        svg_lines.append(text)
+        max_x = max(max_x, int(x + text_x_offset))
+        max_y = max(max_y, int(y + text_y_offset))
+        x = 0
+        y += FONT_SIZE
+    return svg_lines, max_x, max_y
+
 def write_svg(lang: Lang, rendered_blocks: dict[Enum, list[RenderedSection]]) -> None:
 
     try:
@@ -282,18 +325,33 @@ def write_svg(lang: Lang, rendered_blocks: dict[Enum, list[RenderedSection]]) ->
     font.scale = (upem, upem)
     scale = FONT_SIZE / upem
 
-    col = 0
     SIDE_PADDING = 6
+    col_x = 0
 
-    groups: list[SVGGroup] = []
-    max_x = 0
-    max_y = 0
-    for column_info in Meta.get_category_layout_info():
+    group_columns: list[SVGColumn] = []
+    max_x: int = 0
+    max_y: int = 0
+
+    def get_tuck_x(current_column: int, height: int) -> int:
+        nonlocal group_columns
+        x = 0
+        if current_column == 0: # The first column
+            return x
+        col = group_columns[current_column - 1]
+        for row in col.groups:
+            if row.y > height:
+                break
+            x = max(x, row.max_width)
+        return x
+    
+    for column_index, column_info in enumerate(Meta.get_category_layout_info()):
         do_x_offset = False
         row = 0
+        column_height = 0
+        column_width = 0
+        group_column = SVGColumn(start_x=0, groups=[])
         for category_layout in column_info.categories:
             category = category_layout.category
-            layout = category_layout.layout
 
             try:
                 blocks_ls = rendered_blocks[category]
@@ -301,24 +359,25 @@ def write_svg(lang: Lang, rendered_blocks: dict[Enum, list[RenderedSection]]) ->
                 print(f"Error: Missing category {category} in rendered_blocks")
                 continue
 
+            # Place blocks
             for i, block in enumerate(blocks_ls):
-                # Place blocks
                 block_data = Meta.get_tile_dictionary()[category][i] # type: ignore
 
-                x = col + SIDE_PADDING
+                x = col_x
                 size = block_data.section_final_size()
-                match layout:
+                x_offset = 0
+                match category_layout.layout:
                     case LayoutBehaviour.ALTERNATING:
-                        block_x = x + (TILE_SIZE if do_x_offset else 0)
+                        x_offset = TILE_SIZE if do_x_offset else 0
                         do_x_offset = not do_x_offset
                     case LayoutBehaviour.CENTER:
-                        block_x = x - math.floor(size[0] / 2) + TILE_SIZE * 2
-
-                y = row * TILE_SIZE + SIDE_PADDING
+                        x_offset = -math.floor(size[0] / 2) + TILE_SIZE * 2
+                        
+                y: int = row * TILE_SIZE
 
                 img = SVGImage(
-                    x = block_x,
-                    y = y,
+                    x_offset = x_offset,
+                    y = y + SIDE_PADDING,
                     width = size[0],
                     height = size[1],
                     image_type = block.image_type,
@@ -326,46 +385,31 @@ def write_svg(lang: Lang, rendered_blocks: dict[Enum, list[RenderedSection]]) ->
                 )
 
                 # Place text
-                start_x = x
-                text_x_offset = offsets.text_x_offset
-                text_y_offset = offsets.text_y_offset
+                text_x_offset = int(offsets.text_x_offset)
+                text_y_offset = int(offsets.text_y_offset)
 
-                svg_lines: list[SVGText] = []
-                for line in block_data.name.get(lang).splitlines():
-                    glyph_infos, glyph_positions = shape_text(font, line)
-                    text = SVGText(
-                        x = int(x + text_x_offset),
-                        y = int(y + text_y_offset),
-                        text = line if EMBED_FONT_IN_SVG else [],
-                    )
-                    
-                    for info, pos in zip(glyph_infos, glyph_positions):
-                        gid = info.codepoint
-                        used_glyphs.add(gid)
-                        xadv = pos.x_advance * scale
-                        yadv = pos.y_advance * scale
-                        x += xadv
-                        y += yadv
-                        if not EMBED_FONT_IN_SVG:
-                            assert(isinstance(text.text, list))
-                            text.text.append(CodepointInfo(
-                                gid=gid, x_advance=xadv, y_advance=yadv
-                            ))
+                svg_lines, text_max_x, text_max_y = get_svg_text(
+                    block_data, font, lang, used_glyphs,
+                    text_x_offset,
+                    y, text_y_offset + SIDE_PADDING,
+                    scale)
 
-                    svg_lines.append(text)
-
-                    max_x = max(max_x, x + text_x_offset)
-                    max_y = max(max_y, y + text_y_offset + size[1] / 2)
-                    x = start_x
-                    y += FONT_SIZE
+                column_width = max(column_width, text_max_x + TILE_SIZE)
+                max_x = max(max_x, x + column_width)
+                max_y = max(max_y, y + text_max_y + size[1] // 2)
 
                 row += offsets.row_advance
-                # text_ref_str += "  </g>\n"
-                groups.append(SVGGroup(img, svg_lines))
+                column_height = y
+                group_column.groups.append(SVGRow(
+                    image=img, lines=svg_lines,
+                    max_width=column_width, y=y))
+                
             # Space categories a little bit
             row += offsets.category_advance
-        col += column_info.x_offset_to_next
-
+        col_x += get_tuck_x(column_index, column_height)
+        max_x = max(max_x, col_x + column_width)
+        group_column.start_x = col_x + SIDE_PADDING
+        group_columns.append(group_column)
 
     subset_options = subset.Options()
     # Convert font to woff2
@@ -378,19 +422,17 @@ def write_svg(lang: Lang, rendered_blocks: dict[Enum, list[RenderedSection]]) ->
         subsetter.populate(gids=used_glyphs)
         subsetter.subset(subsetted_font)
 
-    w, h = int(max_x + SIDE_PADDING), int(max_y + SIDE_PADDING)
-
     svg_document = SVGDocument(
-        width = w, height = h,
+        width = max_x, height = max_y,
         font_family=TERRARIA_FONT_NAME,
         font=subsetted_font,
         font_options=subset_options,
         used_glyphs=used_glyphs,
         font_size=FONT_SIZE,
         background=SVGRect(
-            width=w, height=h, fill="#fff"
+            width=max_x, height=max_y, fill="#fff"
         ),
-        blocks = groups,
+        blocks = group_columns,
     )
 
     with open('Reference.svg', 'w', newline='') as file:

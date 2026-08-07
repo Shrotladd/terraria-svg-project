@@ -23,6 +23,9 @@ class Lang(Enum):
     def names(cls) -> list[str]:
         return [e.name for e in cls]
 
+# ---- Arguments ----
+# Configured in generate.py after parsing args
+
 # True for generating block svg
 # False for generating wall svg
 BLOCK_MODE: bool # Value assigned after argument parsing
@@ -35,9 +38,10 @@ EMBED_FONT_IN_SVG: bool
 
 LANGUAGE: Lang
 
+# ---- Config ----
 
 TERRARIA_FONT_NAME = "Andy Std Bold"
-TERRARIA_FONT = TERRARIA_FONT_NAME + ".otf"
+TERRARIA_FONT = TERRARIA_FONT_NAME+".otf"
 
 # Dimensions in # of tiles
 SHEET_TILES_X = 16
@@ -48,6 +52,8 @@ FONT_SIZE = 20
 # Space between top left corner of tiles, should be greater than the tile size.
 TILE_SPACE = SHEET_SCALE * 9
 TILE_SIZE = SHEET_SCALE * 8
+
+# ---- Data classes ----
 
 @dataclass
 class AnimData:
@@ -93,7 +99,7 @@ class LayoutBehaviour(Enum):
 @dataclass
 class LayoutOffsets:
     text_x_offset: float = TILE_SIZE * 4.5
-    text_y_offset: float = TILE_SIZE + FONT_SIZE / 2
+    text_y_offset: float = TILE_SIZE + FONT_SIZE * 0.75
     row_advance: int = 2  # Space added between rows in a category
     category_advance: int = 2  # Space added between categories
 
