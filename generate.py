@@ -16,49 +16,11 @@ import uharfbuzz as hb
 from fontTools import subset
 from fontTools.ttLib import TTFont
 from fontTools.pens.svgPathPen import SVGPathPen
-# from fontTools.pens.transformPen import TransformPen
-# from fontTools.misc.transform import Transform 
-
-import data
-from data import Lang
-
-parser = argparse.ArgumentParser()
-
-parser.add_argument(
-    "-m", "--mode", help="Which kind of svg to generate",
-    default="block", choices=["block", "wall"])
-parser.add_argument(
-    "--debug_save_sections", default=False, help="Save constructed block images to \"{block/wall}_sections/\"",
-    action=argparse.BooleanOptionalAction)
-parser.add_argument(
-    "--embed_font", default=False, help="Save's space and allows for selectable text, WARNING currently wiki.gg flags the file as unsafe when used, off by default",
-    action=argparse.BooleanOptionalAction)
-parser.add_argument(
-    "-l", "--lang", help="Which language to generate",
-    default=Lang.en.name, choices=Lang.names())
-
-args = parser.parse_args(sys.argv[1:])
-
-data.BLOCK_MODE = True if args.mode == "block" else False
-data.DEBUG_SAVE_BLOCK_SECTIONS = args.debug_save_sections
-data.EMBED_FONT_IN_SVG = args.embed_font
-data.LANGUAGE = Lang[args.lang]
-if data.EMBED_FONT_IN_SVG:
-    print("- Embedding font enabled")
 
 from data import (
-    LayoutBehaviour, RenderedSection, ImageType,
-    TILE_SIZE, FONT_SIZE, TERRARIA_FONT_NAME, TERRARIA_FONT,
-    BLOCK_MODE, DEBUG_SAVE_BLOCK_SECTIONS, EMBED_FONT_IN_SVG, LANGUAGE, # Import BLOCK_MODE, etc *AFTER* parsing args
+    Lang, LayoutBehaviour, RenderedSection, ImageType, Options, Metadata,
+    TILE_SIZE, FONT_SIZE,
 )
-
-# import blocks_meta as meta
-if BLOCK_MODE:
-    from blocks_meta import BlockMetadata as Meta
-    from blocks_meta import Category
-else:
-    from walls_meta import WallMetadata as Meta
-    from walls_meta import Category
 
 
 class Indenter:
@@ -75,7 +37,8 @@ class Indenter:
 
     def __repr__(self) -> str:
         return ' ' * self.indent * self.indent_spaces
-    
+
+
 @dataclass
 class SVGImage:
     x_offset: int
@@ -91,11 +54,13 @@ class SVGImage:
             f'href="data:image/{self.image_type.name.lower()};base64,{str(self.data, encoding="utf-8")}"/>\n'
         )
 
+
 @dataclass
 class CodepointInfo:
     gid: int
     x_advance: float
     y_advance: float
+
 
 @dataclass
 class SVGText:
@@ -115,6 +80,7 @@ class SVGText:
             y += codepoint_info.y_advance
         return out
 
+
 @dataclass
 class SVGRow:
     image: SVGImage
@@ -129,6 +95,7 @@ class SVGRow:
         out += self.image.encode(start_x, indent)
         return out
 
+
 @dataclass
 class SVGRect:
     width: int
@@ -138,10 +105,12 @@ class SVGRect:
     def encode(self, indent: Indenter) -> str:
         return f'{indent}<rect width="{self.width}" height="{self.height}" fill="{self.fill}"/>\n'
 
+
 @dataclass
 class SVGColumn:
     start_x: int
     groups: list[SVGRow]
+
 
 @dataclass
 class SVGDocument:
@@ -154,6 +123,7 @@ class SVGDocument:
     font_options: subset.Options
     background: SVGRect
     blocks: list[SVGColumn]
+    embed_font: bool
 
     def encode_embedded_font(self, indent: Indenter) -> str:
         # Write font style
@@ -229,7 +199,7 @@ class SVGDocument:
         # Main body
         with indent:
 
-            if EMBED_FONT_IN_SVG:
+            if self.embed_font:
                 out += self.encode_embedded_font(indent)
             else:
                 out += self.encode_text_paths(indent)
@@ -252,6 +222,7 @@ class SVGDocument:
         
         return out
 
+
 def shape_text(font, text: str):
     """Get harfbuzz text shape info, returns (hb.Buffer.glyphs_infos, hb.Buffer.glyph_positions)"""
     features = {"kern": True, "liga": True}
@@ -267,9 +238,11 @@ def shape_text(font, text: str):
 
     return infos, positions
 
+
 def get_svg_text(
         block, font, lang: Lang, used_glyphs: set[int],
-        text_x_offset: int, text_y: float, text_y_offset: int, text_scale: float
+        text_x_offset: int, text_y: float, text_y_offset: int, text_scale: float,
+        embed_font_in_svg: bool
         ) -> tuple[list[SVGText], int, int]:
     """Get a list of lines and the local max_x and max_y"""
     svg_lines: list[SVGText] = []
@@ -283,7 +256,7 @@ def get_svg_text(
         text = SVGText(
             x_offset = text_x_offset,
             y = int(y + text_y + text_y_offset),
-            text = line if EMBED_FONT_IN_SVG else [],
+            text = line if embed_font_in_svg else [],
         )
         for info, pos in zip(glyph_infos, glyph_positions):
             gid = info.codepoint
@@ -292,7 +265,7 @@ def get_svg_text(
             yadv = pos.y_advance * text_scale
             x += xadv
             y += yadv
-            if not EMBED_FONT_IN_SVG:
+            if not embed_font_in_svg:
                 assert(isinstance(text.text, list))
                 text.text.append(CodepointInfo(
                     gid=gid, x_advance=xadv, y_advance=yadv
@@ -304,10 +277,11 @@ def get_svg_text(
         y += FONT_SIZE
     return svg_lines, max_x, max_y
 
-def write_svg(lang: Lang, rendered_blocks: dict[Enum, list[RenderedSection]]) -> None:
+
+def write_svg(options: Options, rendered_blocks: dict[Enum, list[RenderedSection]], meta: Metadata) -> None:
 
     try:
-        with open(TERRARIA_FONT, 'rb') as f:
+        with open(options.get_font(), 'rb') as f:
             font_data = f.read()
     except FileNotFoundError as e:
         print("Couldn't find font file, please follow the README to download.")
@@ -316,7 +290,7 @@ def write_svg(lang: Lang, rendered_blocks: dict[Enum, list[RenderedSection]]) ->
     
     used_glyphs: set[int] = set()
 
-    offsets = Meta.get_layout_offsets()
+    offsets = meta.get_layout_offsets()
     
     face = hb.Face(font_data) # type: ignore
     font = hb.Font(face) # type: ignore
@@ -345,7 +319,7 @@ def write_svg(lang: Lang, rendered_blocks: dict[Enum, list[RenderedSection]]) ->
             x = max(x, row.max_width)
         return x
     
-    for column_index, column_info in enumerate(Meta.get_category_layout_info()):
+    for column_index, column_info in enumerate(meta.get_category_layout_info()):
         do_x_offset = False
         row = 0
         column_height = 0
@@ -362,7 +336,7 @@ def write_svg(lang: Lang, rendered_blocks: dict[Enum, list[RenderedSection]]) ->
 
             # Place blocks
             for i, block in enumerate(blocks_ls):
-                block_data = Meta.get_tile_dictionary()[category][i] # type: ignore
+                block_data = meta.get_tile_dictionary()[category][i]
 
                 x = col_x
                 size = block_data.section_final_size()
@@ -390,10 +364,11 @@ def write_svg(lang: Lang, rendered_blocks: dict[Enum, list[RenderedSection]]) ->
                 text_y_offset = int(offsets.text_y_offset)
 
                 svg_lines, text_max_x, text_max_y = get_svg_text(
-                    block_data, font, lang, used_glyphs,
+                    block_data, font, options.language, used_glyphs,
                     text_x_offset,
                     y, text_y_offset + SIDE_PADDING,
-                    scale)
+                    scale,
+                    options.embed_font_in_svg)
 
                 column_width = max(column_width, text_max_x + TILE_SIZE)
                 max_x = max(max_x, x + column_width)
@@ -418,14 +393,14 @@ def write_svg(lang: Lang, rendered_blocks: dict[Enum, list[RenderedSection]]) ->
     subset_options.layout_features = ["*"]
     subset_options.desubroutinize = True
     subsetted_font = TTFont(io.BytesIO(font_data))
-    if EMBED_FONT_IN_SVG:
+    if options.embed_font_in_svg:
         subsetter = subset.Subsetter()
         subsetter.populate(gids=used_glyphs)
         subsetter.subset(subsetted_font)
 
     svg_document = SVGDocument(
         width = max_x, height = max_y,
-        font_family=TERRARIA_FONT_NAME,
+        font_family=options.font_name,
         font=subsetted_font,
         font_options=subset_options,
         used_glyphs=used_glyphs,
@@ -434,45 +409,90 @@ def write_svg(lang: Lang, rendered_blocks: dict[Enum, list[RenderedSection]]) ->
             width=max_x, height=max_y, fill="#fff"
         ),
         blocks = group_columns,
+        embed_font=options.embed_font_in_svg
     )
 
     with open('Reference.svg', 'w', newline='') as file:
         file.write(svg_document.encode())
 
-def process(lang: Lang) -> None:
-    file_dict: dict[Category, list[RenderedSection]] = {}
 
+def process(options: Options, meta: Metadata) -> None:
+    file_dict = {}
     print("Rendering")
-    for category, block_list in Meta.get_tile_dictionary().items():
+    for category, block_list in meta.get_tile_dictionary().items():
         for block in block_list:
-            tile_image_path: str = Meta.get_block_path(block.tile_number)
+            tile_image_path: str = meta.get_block_path(block.tile_number)
             # Assume images exist
             with Image.open(tile_image_path) as img:
-                lut = Meta.get_template_and_lut(block.pattern) # type: ignore
+                lut = meta.get_template_and_lut(block.pattern)
 
                 try:
-                    Meta.get_tile_img_prepasses()[block.tile_number](img)
-                    print(f"Doing {block.name.get(lang)} prepass")
+                    meta.get_tile_img_prepasses()[block.tile_number](img)
+                    print(f"Doing {block.name.get(options.language)} prepass")
                 except KeyError:
                     pass
                 
-                render = Meta.render_block(img, block, lut) # type: ignore
+                render = meta.render_block(img, block, lut, options.debug_save_block_sections)
 
                 if not category in file_dict:
                     file_dict[category] = []
                 file_dict[category].append(render)
 
     print("Writing svg")
-    write_svg(lang, file_dict) # type: ignore
+    write_svg(options, file_dict, meta)
+
+
+def get_options() -> tuple[Metadata, Options]:
+    parser = argparse.ArgumentParser()
+    
+    import blocks_meta
+    import walls_meta
+    mode_choices = {
+        "block": blocks_meta.BlockMetadata,
+        "meta": walls_meta.WallMetadata,
+    }
+
+    parser.add_argument(
+        "-m", "--mode", help="Which kind of svg to generate",
+        required=True, choices=mode_choices.keys())
+    parser.add_argument(
+        "--debug_save_sections", default=False, help="Save constructed block images to \"{block/wall}_sections/\"",
+        action=argparse.BooleanOptionalAction)
+    parser.add_argument(
+        "--embed_font", default=False, help="Save's space and allows for selectable text, WARNING currently wiki.gg flags the file as unsafe when used, off by default",
+        action=argparse.BooleanOptionalAction)
+    parser.add_argument(
+        "-l", "--lang", help="Which language to generate",
+        default=Lang.en.name, choices=Lang.names())
+
+    args = parser.parse_args(sys.argv[1:])
+    if args.mode not in mode_choices:
+        print(f"Unknown generator mode: {args.mode}")
+        sys.exit(1)
+
+    meta = mode_choices[args.mode]
+    options = Options(
+        debug_save_block_sections = args.debug_save_sections,
+        embed_font_in_svg = args.embed_font,
+        language = Lang[args.lang],
+    )
+
+    if options.embed_font_in_svg:
+        print("- Embedding font enabled")
+
+    return meta, options
+
 
 if __name__ == "__main__":
-    if DEBUG_SAVE_BLOCK_SECTIONS:
-        render_path = pathlib.Path(Meta.rendered_image_folder_path())
+    meta, options = get_options()
+
+    if options.debug_save_block_sections:
+        render_path = pathlib.Path(meta.rendered_image_folder_path())
         if not render_path.exists():
             print(f"Creating {render_path}")
             render_path.mkdir()
     
-    process(lang=LANGUAGE)
+    process(options, meta)
 
     end_time = time.time()
     print(f"Finished in {end_time - start_time:.2f} seconds")

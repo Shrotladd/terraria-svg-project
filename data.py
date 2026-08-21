@@ -11,37 +11,6 @@ from typing import Protocol
 
 from PIL import Image
 
-@unique
-class Lang(Enum):
-    en = auto()
-    # fr = auto()
-    # pt = auto()
-    # ru = auto()
-    # zh = auto()
-
-    @classmethod
-    def names(cls) -> list[str]:
-        return [e.name for e in cls]
-
-# ---- Arguments ----
-# Configured in generate.py after parsing args
-
-# True for generating block svg
-# False for generating wall svg
-BLOCK_MODE: bool # Value assigned after argument parsing
-# Save constructed block images to "[block/wall]_sections/"
-DEBUG_SAVE_BLOCK_SECTIONS: bool # Value assigned after argument parsing
-
-# Workaround for wiki.gg flagging embedded fonts in @font-face as unsafe
-# Off by default
-EMBED_FONT_IN_SVG: bool
-
-LANGUAGE: Lang
-
-# ---- Config ----
-
-TERRARIA_FONT_NAME = "Andy Std Bold"
-TERRARIA_FONT = TERRARIA_FONT_NAME+".otf"
 
 # Dimensions in # of tiles
 SHEET_TILES_X = 16
@@ -53,7 +22,40 @@ FONT_SIZE = 20
 TILE_SPACE = SHEET_SCALE * 9
 TILE_SIZE = SHEET_SCALE * 8
 
+
 # ---- Data classes ----
+
+@unique
+class Lang(Enum):
+    en = auto()  # English
+    # fr = auto()  # French
+    # pt = auto()  # Portuguese
+    # ru = auto()  # Russian
+    # zh = auto()  # Simplified chinese
+
+    @classmethod
+    def names(cls) -> list[str]:
+        return [e.name for e in cls]
+    
+@dataclass
+class Options:
+    # # True for generating block svg
+    # # False for generating wall svg
+    # block_mode: bool
+
+    # Save constructed block images to "[block/wall]_sections/"
+    debug_save_block_sections: bool
+
+    # Workaround for wiki.gg flagging embedded fonts in @font-face as unsafe
+    # Off by default
+    embed_font_in_svg: bool
+
+    language: Lang
+
+    font_name: str = "Andy Std Bold"
+
+    def get_font(self) -> str:
+        return self.font_name + ".otf"
 
 @dataclass
 class AnimData:
@@ -87,7 +89,6 @@ class ImageType(Enum):
 
 @dataclass
 class RenderedSection:
-    index: int
     image_type: ImageType
     data: bytes
 
@@ -105,12 +106,6 @@ class LayoutOffsets:
 
 # @dataclass
 class Name:
-    # en: str       # English
-    # fr: str = ""  # French
-    # pt: str = ""  # Portuguese
-    # ru: str = ""  # Russian
-    # zh: str = ""  # Simplified chinese
-
     def __init__(self, **kwargs: str):
         """Provide names for each supported language code"""
         assigned = {l: False for l in Lang.names()}
@@ -134,7 +129,7 @@ def fix_frame_dims(anim: AnimData) -> tuple[int, int]:
         frames_y = anim.num_frames
     return frames_x, frames_y
 
-class Metadata[BlockT, PatternT, CategoryT, ColumnInfoT](Protocol):
+class Metadata[BlockT, PatternT, CategoryT, ColumnLayoutT]:
 
     @staticmethod
     @abstractmethod
@@ -168,12 +163,12 @@ class Metadata[BlockT, PatternT, CategoryT, ColumnInfoT](Protocol):
 
     @staticmethod
     @abstractmethod
-    def render_block(img: Image.Image, block: BlockT, lut: FrameInfo) -> RenderedSection:
+    def render_block(img: Image.Image, block: BlockT, lut: FrameInfo, debug_save_block_sections: bool) -> RenderedSection:
         raise NotImplementedError()
 
     @staticmethod
     @abstractmethod
-    def get_category_layout_info() -> Sequence[ColumnInfoT]:
+    def get_category_layout_info() -> Sequence[Sequence[ColumnLayoutT]]:
         raise NotImplementedError()
 
     @staticmethod

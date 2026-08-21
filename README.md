@@ -23,6 +23,6 @@ My program to generate svg images for the https://terraria.wiki.gg/wiki/Blocks a
 2. Acquire dependencies
 
 3. Run generate.py.
-Pass -m block/wall to specify which svg to generate, by default it is -m block. -l to set the language, en by default. Pass -h to see options
+Pass -m block/wall to specify which svg to generate. -l to set the language, en by default. Pass -h to see options
 
 4. Reference.svg should be created

@@ -29,6 +29,7 @@ class BlockPattern(Enum):
     LAYER = auto()
     BOULDER = auto()
 
+
 @unique
 class AnimationType(Enum):
     NONE = auto()
@@ -41,9 +42,11 @@ class AnimationType(Enum):
     LAVA_CLOUD = auto()
     RAINBOW_BOULDER = auto()
 
+
 @dataclass(kw_only=True) # dataclass inheritance is weird without kw_only
 class BlockAnimData(AnimData):
     type: AnimationType = AnimationType.NONE
+
 
 @dataclass
 class Block:
@@ -72,7 +75,8 @@ class Block:
     def sanitised_name(self, lang: Lang) -> str:
         """Name with invalid path characters removed"""
         return self.name.get(lang).replace("\n", "")
-    
+
+
 @unique
 class Category(Enum):
     SOIL = auto()
@@ -649,6 +653,7 @@ CATEGORY_LAYOUT_INFOS = (
 
 LAYOUT_OFFSETS = LayoutOffsets()
 
+
 def confetti_block_transparency_workaround(img: Image.Image) -> None:
     # Force confetti to have transparency
     # Since gif is a garbage format
@@ -685,7 +690,8 @@ def extract_tile(
         tile_size, info
     )
 
-def render_block_default(img: Image.Image, block: Block, lut: FrameInfo) -> bytes:
+
+def render_block_default(img: Image.Image, block: Block, lut: FrameInfo, debug_save_block_sections: bool) -> bytes:
     """Render a block to a base64 encoded png image"""
     tile_list: list[Image.Image] = []
 
@@ -700,11 +706,12 @@ def render_block_default(img: Image.Image, block: Block, lut: FrameInfo) -> byte
     final_img = image_manipulation.image_grid(tile_list, block.section_size())
     byte_file = io.BytesIO()
     final_img.save(byte_file, format=ImageType.PNG.name)
-    if data.DEBUG_SAVE_BLOCK_SECTIONS:
+    if debug_save_block_sections:
         final_img.save(f'{RENDERED_SECTION_PATH}/{block.tile_number} {block.sanitised_name(Lang.en)}.png')
     return b64encode(byte_file.getvalue())
 
-def render_block_boulder(img: Image.Image, block: Block) -> bytes:
+
+def render_block_boulder(img: Image.Image, block: Block, debug_save_block_sections: bool) -> bytes:
     """Render a block to a base64 encoded png image"""
     tile_list: list[Image.Image] = []
 
@@ -738,11 +745,12 @@ def render_block_boulder(img: Image.Image, block: Block) -> bytes:
 
     byte_file = io.BytesIO()
     final_img.save(byte_file, format=ImageType.PNG.name)
-    if data.DEBUG_SAVE_BLOCK_SECTIONS:
+    if debug_save_block_sections:
         final_img.save(f'{RENDERED_SECTION_PATH}/{block.tile_number} {block.sanitised_name(Lang.en)}.png')
     return b64encode(byte_file.getvalue())
 
-def render_block_animated(img: Image.Image, block: Block, lut: FrameInfo) -> bytes:
+
+def render_block_animated(img: Image.Image, block: Block, lut: FrameInfo, debug_save_block_sections: bool) -> bytes:
     """Render an animated block to a base64 encoded gif image"""
     tile_list: list[Image.Image] = []
     
@@ -830,11 +838,11 @@ def render_block_animated(img: Image.Image, block: Block, lut: FrameInfo) -> byt
 
         case AnimationType.LAVA_CLOUD:
             # TODO correctly animate lava cloud
-            return render_block_default(img, block, lut)
+            return render_block_default(img, block, lut, debug_save_block_sections)
 
         case AnimationType.RAINBOW_BOULDER:
             # TODO correctly animate rainbow boulder
-            return render_block_default(img, block, lut)
+            return render_block_default(img, block, lut, debug_save_block_sections)
 
     if block.anim.is_reversed:
         gif_img = tile_list[0]
@@ -852,7 +860,7 @@ def render_block_animated(img: Image.Image, block: Block, lut: FrameInfo) -> byt
         duration=frame_duration,
         background=0, optimise=False, interlace=True
     )
-    if data.DEBUG_SAVE_BLOCK_SECTIONS:
+    if debug_save_block_sections:
         gif_img.save(
             f'{RENDERED_SECTION_PATH}/{block.tile_number} {block.sanitised_name(Lang.en)}.gif',
             save_all=True, append_images=tile_list, disposal=2, loop=0,
@@ -863,7 +871,7 @@ def render_block_animated(img: Image.Image, block: Block, lut: FrameInfo) -> byt
     return b64encode(byte_file.getvalue())
 
 
-class BlockMetadata(Metadata):
+class BlockMetadata(Metadata[Block, BlockPattern, Category, CategoryLayout]):
 
     @staticmethod
     def get_tile_dictionary() -> dict[Category, Sequence[Block]]:
@@ -917,20 +925,17 @@ class BlockMetadata(Metadata):
     # ------ Render api ------ #
 
     @staticmethod
-    def render_block(img: Image.Image, block: Block, lut: FrameInfo) -> RenderedSection:
+    def render_block(img: Image.Image, block: Block, lut: FrameInfo, debug_save_block_sections: bool) -> RenderedSection:
         
         if block.pattern == BlockPattern.BOULDER:
             render = RenderedSection(
-                block.tile_number, ImageType.PNG,
-                render_block_boulder(img, block))
+                ImageType.PNG, render_block_boulder(img, block, debug_save_block_sections))
         else:
             if block.anim.type == AnimationType.NONE:
                 render = RenderedSection(
-                    block.tile_number, ImageType.PNG,
-                    render_block_default(img, block, lut))
+                    ImageType.PNG, render_block_default(img, block, lut, debug_save_block_sections))
             else:
                 render = RenderedSection(
-                    block.tile_number, ImageType.GIF,
-                    render_block_animated(img, block, lut))
+                    ImageType.GIF, render_block_animated(img, block, lut, debug_save_block_sections))
                 
         return render

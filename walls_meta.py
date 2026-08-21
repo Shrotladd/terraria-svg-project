@@ -53,11 +53,13 @@ class AnimationType(Enum):
     # LAVA_CLOUD = auto()
     # RAINBOW_CLOUD = auto()
 
+
 @dataclass(kw_only=True) # dataclass inheritance is weird without kw_only
 class WallAnimData(AnimData):
     type: AnimationType = AnimationType.NONE
     bounce: bool = False  # Duplicate sequence at the end but in reverse order
     repeat_last: int = 0  # Number of times to duplicate last frame
+
 
 @unique
 class Category(Enum):
@@ -77,6 +79,7 @@ class Category(Enum):
     ANCIENT = auto()
     DUNGEON = auto()
     NEW = auto()
+
 
 @dataclass
 class Wall:
@@ -100,6 +103,7 @@ class Wall:
     def sanitised_name(self, lang: Lang) -> str:
         """Name with invalid path characters removed"""
         return self.name.get(lang).replace("\n", "")
+
 
 BLOCK_DICTIONARY: dict[Category, Sequence[Wall]] = {
     Category.NATURAL: (
@@ -575,10 +579,12 @@ SLAB_PATTERN_LUT = FrameInfo(
     )
 )
 
+
 @dataclass
 class CategoryLayout:
     category: Category
     layout: LayoutBehaviour = LayoutBehaviour.ALTERNATING
+
 
 CATEGORY_LAYOUT_INFOS = (
     (
@@ -617,6 +623,7 @@ LAYOUT_OFFSETS = LayoutOffsets(
     category_advance = 3,
 )
 
+
 def extract_tile(
         img: Image.Image, indices: tuple[int, int],
         num_frames_y: int, frame: int, info: LutInfo,
@@ -632,7 +639,8 @@ TILE_IMG_PREPASS: dict[int, Callable[[Image.Image], None]] = {
     227: blocks_meta.confetti_block_transparency_workaround,
 }
 
-def render_wall_default(img: Image.Image, wall: Wall, lut: FrameInfo) -> bytes:
+
+def render_wall_default(img: Image.Image, wall: Wall, lut: FrameInfo, debug_save_block_sections: bool) -> bytes:
     """Render a block to a base64 encoded png image"""
     tile_list: list[Image.Image] = []
 
@@ -649,11 +657,12 @@ def render_wall_default(img: Image.Image, wall: Wall, lut: FrameInfo) -> bytes:
     final_img = image_manipulation.image_grid(tile_list, wall.section_size())
     byte_file = io.BytesIO()
     final_img.save(byte_file, format=ImageType.PNG.name)
-    if data.DEBUG_SAVE_BLOCK_SECTIONS:
+    if debug_save_block_sections:
         final_img.save(f'{RENDERED_SECTION_PATH}/{wall.tile_number} {wall.sanitised_name(Lang.en)}.png')
     return b64encode(byte_file.getvalue())
 
-def render_wall_animated(img: Image.Image, wall: Wall, lut: FrameInfo) -> bytes:
+
+def render_wall_animated(img: Image.Image, wall: Wall, lut: FrameInfo, debug_save_block_sections: bool) -> bytes:
     """Render an animated block to a base64 encoded gif image"""
     tile_list: list[Image.Image] = []
     
@@ -779,7 +788,7 @@ def render_wall_animated(img: Image.Image, wall: Wall, lut: FrameInfo) -> bytes:
         duration=frame_duration,
         background=0, optimise=False, interlace=True
     )
-    if data.DEBUG_SAVE_BLOCK_SECTIONS:
+    if debug_save_block_sections:
         gif_img.save(
             f'{RENDERED_SECTION_PATH}/{wall.tile_number} {wall.sanitised_name(Lang.en)}.gif',
             save_all=True, append_images=tile_list, disposal=2, loop=0,
@@ -790,7 +799,7 @@ def render_wall_animated(img: Image.Image, wall: Wall, lut: FrameInfo) -> bytes:
     return b64encode(byte_file.getvalue())
 
 
-class WallMetadata(Metadata):
+class WallMetadata(Metadata[Wall, WallPattern, Category, CategoryLayout]):
 
     # Blocks
 
@@ -834,15 +843,13 @@ class WallMetadata(Metadata):
     # Render blocks
 
     @staticmethod
-    def render_block(img: Image.Image, block: Wall, lut: FrameInfo) -> RenderedSection:
+    def render_block(img: Image.Image, block: Wall, lut: FrameInfo, debug_save_block_sections: bool) -> RenderedSection:
         if block.anim.type == AnimationType.NONE:
             render = RenderedSection(
-                block.tile_number, ImageType.PNG,
-                render_wall_default(img, block, lut))
+                ImageType.PNG, render_wall_default(img, block, lut, debug_save_block_sections))
         else:
             render = RenderedSection(
-                block.tile_number, ImageType.GIF,
-                render_wall_animated(img, block, lut))
+                ImageType.GIF, render_wall_animated(img, block, lut, debug_save_block_sections))
         return render
 
     # Where to place blocks when generating svg
