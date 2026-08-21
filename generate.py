@@ -449,7 +449,7 @@ def get_options() -> tuple[Metadata, Options]:
     import walls_meta
     mode_choices = {
         "block": blocks_meta.BlockMetadata,
-        "meta": walls_meta.WallMetadata,
+        "wall": walls_meta.WallMetadata,
     }
 
     parser.add_argument(
