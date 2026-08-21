@@ -184,7 +184,7 @@ class SVGDocument:
                 # transform_pen = TransformPen(pen, Transform().scale(x=scale, y=scale))
                 glyph.draw(pen)
                 paths += f'{indent}<path id="{glyph_id}" transform="scale({scale},-{scale})" d="{pen.getCommands()}"/>\n'
-        paths += f"{indent}</g>"
+        paths += f"{indent}</g>\n"
         return paths
 
     def encode(self) -> str:
