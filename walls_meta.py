@@ -229,7 +229,7 @@ BLOCK_DICTIONARY: dict[Category, Sequence[Wall]] = {
         Wall(234, Name(en='Crimstone Brick Wall')),
         Wall(24,  Name(en='Mudstone Brick Wall')),
         Wall(82,  Name(en='Disc Wall')),
-        Wall(348, Name(en='Fall Star Wall')),
+        Wall(348, Name(en='Fallen Star Wall')),
         Wall(360, Name(en='Crescent Wall')),
         Wall(14,  Name(en='Obsidian Brick Wall')),
         Wall(23,  Name(en='Iridescent Brick Wall')),
@@ -362,7 +362,7 @@ BLOCK_DICTIONARY: dict[Category, Sequence[Wall]] = {
         Wall(326, Name(en='Cosmic Ember Brick Wall'), pattern=WallPattern.CHECKER),
         Wall(327, Name(en='Cryocore Brick Wall'), pattern=WallPattern.CHECKER),
         Wall(328, Name(en='Mercury Brick Wall'), pattern=WallPattern.CHECKER),
-        Wall(329, Name(en='Star Royal Brick Wall'), pattern=WallPattern.CHECKER),
+        Wall(329, Name(en='Star Royale Brick Wall'), pattern=WallPattern.CHECKER),
         Wall(330, Name(en='Heavenforge Brick Wall'), pattern=WallPattern.CHECKER),
     ),
     Category.GEMSPARK: (
@@ -402,7 +402,7 @@ BLOCK_DICTIONARY: dict[Category, Sequence[Wall]] = {
         Wall(133, Name(en='Bubble Wallpaper')),
         Wall(134, Name(en='Copper Pipe Wallpaper')),
         Wall(135, Name(en='Ducky Wallpaper')),
-        Wall(144, Name(en='Rune Wallpaper'), anim=WallAnimData(
+        Wall(144, Name(en='Arcane Rune Wall'), anim=WallAnimData(
             type=AnimationType.BASIC, num_frames=9, frame_duration=80, repeat_last=10, bounce=True)),
         Wall(148, Name(en='Sail')),
     ),
