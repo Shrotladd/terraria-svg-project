@@ -18,11 +18,29 @@ My program to generate svg images for the https://terraria.wiki.gg/wiki/Blocks a
 
 # Instructions:
 
-1. > git clone https://github.com/Shrotladd/terraria-svg-project
+1. Download
+> git clone https://github.com/Shrotladd/terraria-svg-project
 
-2. Acquire dependencies
+2. Go into it
+> cd terraria-svg-project
 
-3. Run generate.py.
-Pass -m block/wall to specify which svg to generate. -l to set the language, en by default. Pass -h to see options
+3. For cleanliness create an environment 
+> python -m venv .venv
 
-4. Reference.svg should be created
+4. Enter created environment
+- On windows `.venv/Scripts/Activate.ps1`
+- On linux with bash `source .venv/bin/activate`
+
+5. Acquire dependencies
+- Install modules `pip install -r requirements.txt`
+- Run `python extract_files.py` and follow prompts
+- Download font file
+
+6. Run
+- `python generate.py -m block` to generate block svg
+- `python generate.py -m wall` to generate wall svg
+- Pass `-l <lang>` to set the language, en by default
+- Pass `-f <font>` to set the current font
+- Pass `-h` to see all options
+
+7. `Reference.svg` should be created

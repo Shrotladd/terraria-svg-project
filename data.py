@@ -7,7 +7,7 @@ from typing import Sequence, Callable
 from abc import abstractmethod
 from enum import Enum, auto, unique
 from dataclasses import dataclass
-from typing import Protocol
+from pathlib import Path
 
 from PIL import Image
 
@@ -27,6 +27,8 @@ TILE_SIZE = SHEET_SCALE * 8
 
 @unique
 class Lang(Enum):
+    # Uncomment language to enable translations
+
     en = auto()  # English
     # fr = auto()  # French
     # pt = auto()  # Portuguese
@@ -52,10 +54,12 @@ class Options:
 
     language: Lang
 
+    font_folder: Path = Path(".")
     font_name: str = "Andy Std Bold"
+    font_ext: str = ".otf"
 
-    def get_font(self) -> str:
-        return self.font_name + ".otf"
+    def get_font_path(self) -> str:
+        return str(self.font_folder.joinpath(self.font_name + self.font_ext))
 
 @dataclass
 class AnimData:

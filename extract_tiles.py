@@ -2,7 +2,6 @@
 1. Download XNB2PNG from https://github.com/tolik518/Xnb2png
 2. Place XNB2PNG.exe at the root
 3. Run extract_tiles.py and follow prompts
-3a. 
 3a. Create xnbs/ folder if it doesn't already exist
 3b. Place Tiles_*.xnb and/or Wall_*.xnb files from 'Terraria/Content/Images/' in xnbs/
 4. Run extract_tiles.py to extract sprite sheets
@@ -89,9 +88,10 @@ def try_get_xnbs() -> list[str]:
     xnbs = try_get_steam_files()
 
     if xnbs is None:
-        print("Do you want to provide file path to the terraria installation folder?")
+        print("Terraria steam installation was not found...\n")
+        print("Do you want to provide the file path to the terraria installation folder?")
         if not get_user_confirmation():
-            print("Please manually provide xnb's")
+            print("Please manually provide xnb's in xnbs/")
             pause_exit(1)
 
         user_path = pathlib.Path(ask_user_for_path())
@@ -121,7 +121,10 @@ if __name__ == "__main__":
     # Make sure xnb2png exists
     if not pathlib.Path("XNB2PNG.exe").exists():
         print("Please provide XNB2PNG.exe from https://github.com/tolik518/Xnb2png", file=sys.stderr)
-        pause_exit(1)
+        input("Press enter to continue...")
+        if not pathlib.Path("XNB2PNG.exe").exists():
+            pause_exit(1)
+        print("Found XNB2PNG.exe")
     # Make sure xnbs folder exists
     pathlib.Path("xnbs").mkdir(exist_ok=True)
 

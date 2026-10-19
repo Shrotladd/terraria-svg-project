@@ -281,7 +281,7 @@ def get_svg_text(
 def write_svg(options: Options, rendered_blocks: dict[Enum, list[RenderedSection]], meta: Metadata) -> None:
 
     try:
-        with open(options.get_font(), 'rb') as f:
+        with open(options.get_font_path(), 'rb') as f:
             font_data = f.read()
     except FileNotFoundError as e:
         print("Couldn't find font file, please follow the README to download.")
@@ -464,10 +464,19 @@ def get_options() -> tuple[Metadata, Options]:
     parser.add_argument(
         "-l", "--lang", help="Which language to generate",
         default=Lang.en.name, choices=Lang.names())
+    parser.add_argument(
+        "-f", "--font", help="The font file to use when writing svg",
+        default="Andy Std Bold.otf"
+    )
 
     args = parser.parse_args(sys.argv[1:])
     if args.mode not in mode_choices:
         print(f"Unknown generator mode: {args.mode}")
+        sys.exit(1)
+
+    font = pathlib.Path(args.font)
+    if not font.exists():
+        print("Couldn't find font file")
         sys.exit(1)
 
     meta = mode_choices[args.mode]
@@ -475,7 +484,12 @@ def get_options() -> tuple[Metadata, Options]:
         debug_save_block_sections = args.debug_save_sections,
         embed_font_in_svg = args.embed_font,
         language = Lang[args.lang],
+        font_folder = font.parent,
+        font_name = font.stem,
+        font_ext = font.suffix,
     )
+
+    print(f"- Using \"{options.font_name}\" font")
 
     if options.embed_font_in_svg:
         print("- Embedding font enabled")
