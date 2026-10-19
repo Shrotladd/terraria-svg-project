@@ -5,7 +5,7 @@ blocks_meta.py and walls_meta.py hold layout information for blocks and walls re
 
 from typing import Sequence, Callable
 from abc import abstractmethod
-from enum import Enum, auto, unique
+from enum import Enum, auto
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -25,7 +25,6 @@ TILE_SIZE = SHEET_SCALE * 8
 
 # ---- Data classes ----
 
-@unique
 class Lang(Enum):
     # Uncomment language to enable translations
 
@@ -41,10 +40,6 @@ class Lang(Enum):
     
 @dataclass
 class Options:
-    # # True for generating block svg
-    # # False for generating wall svg
-    # block_mode: bool
-
     # Save constructed block images to "[block/wall]_sections/"
     debug_save_block_sections: bool
 
@@ -86,7 +81,6 @@ class FrameInfo:
     info: LutInfo
     index_table: Lut
 
-@unique
 class ImageType(Enum):
     PNG = auto()
     GIF = auto()
@@ -96,7 +90,6 @@ class RenderedSection:
     image_type: ImageType
     data: bytes
 
-@unique
 class LayoutBehaviour(Enum):
     ALTERNATING = auto()
     CENTER = auto()
@@ -108,18 +101,32 @@ class LayoutOffsets:
     row_advance: int = 2  # Space added between rows in a category
     category_advance: int = 2  # Space added between categories
 
-# @dataclass
 class Name:
     def __init__(self, **kwargs: str):
         """Provide names for each supported language code"""
-        assigned = {l: False for l in Lang.names()}
+        lang_names = Lang.names()
+
+        assigned = {lang: False for lang in lang_names}
+        unknown_langs = []
+
         for lang, name in kwargs.items():
+            if lang not in lang_names:
+                unknown_langs.append(lang)
+                continue
             setattr(self, lang, name)
             assigned[lang] = True
 
-        if not all([b for b in assigned.values()]):
-            raise TypeError(f"Missing names for {", ".join([l for l, b in assigned.items() if not b])}")
+        if unknown_langs:
+            raise TypeError(f"Unknown languages found: {unknown_langs}")
 
+        if not all(assigned.values()):
+            missing_langs = ", ".join([
+                lang
+                for lang, is_assigned in assigned.items()
+                if not is_assigned
+            ])
+            raise TypeError(f"Missing names for {missing_langs}")
+        
     def get(self, lang: Lang) -> str:
         return getattr(self, lang.name)
 

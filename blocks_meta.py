@@ -4,7 +4,7 @@ import sys
 import io
 from base64 import b64encode
 from dataclasses import dataclass, field
-from enum import Enum, unique, auto
+from enum import Enum, auto
 
 from PIL import Image
 
@@ -19,7 +19,6 @@ BLOCK_IMAGE_FOLDER_PATH = 'terraria_blocks'
 RENDERED_SECTION_PATH = 'rendered_block_sections'
 
 
-@unique
 class BlockPattern(Enum):
     """How the blocks in a frame are organised"""
     DEFAULT = auto() # Used by most blocks such as dirt
@@ -30,7 +29,6 @@ class BlockPattern(Enum):
     BOULDER = auto()
 
 
-@unique
 class AnimationType(Enum):
     NONE = auto()
     # Change frame every x miliseconds
@@ -77,7 +75,6 @@ class Block:
         return self.name.get(lang).replace("\n", "")
 
 
-@unique
 class Category(Enum):
     SOIL = auto()
     DESERT = auto()
@@ -239,8 +236,8 @@ BLOCK_DICTIONARY: dict[Category, Sequence[Block]] = {
             type=AnimationType.BASIC, num_frames=3, frame_duration=80)),
     ),
     Category.STONE: (
-        Block(1, Name(en='Stone')),
-        Block(25, Name(en='Ebonstone')),
+        Block(1,   Name(en='Stone')),
+        Block(25,  Name(en='Ebonstone')),
         Block(117, Name(en='Pearlstone Block')),
         Block(203, Name(en='Crimstone Block')),
         Block(367, Name(en='Marble Block')),

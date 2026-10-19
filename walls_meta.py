@@ -5,7 +5,7 @@ import sys
 import io
 from base64 import b64encode
 from dataclasses import dataclass, field
-from enum import Enum, unique, auto
+from enum import Enum, auto
 
 from PIL import Image
 
@@ -32,7 +32,6 @@ type YIndex = int
 type Lut = Sequence[Sequence[tuple[XIndex, YIndex]]]
 
 
-@unique
 class WallPattern(Enum):
     """How the blocks in a frame are organised"""
     DEFAULT = auto() # Used by most blocks such as dirt
@@ -41,7 +40,6 @@ class WallPattern(Enum):
     LAYER = auto()
 
 
-@unique
 class AnimationType(Enum):
     NONE = auto()
     # Change frame every x miliseconds
@@ -61,7 +59,6 @@ class WallAnimData(AnimData):
     repeat_last: int = 0  # Number of times to duplicate last frame
 
 
-@unique
 class Category(Enum):
     NATURAL = auto()
     WOOD = auto()
